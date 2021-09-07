@@ -17,7 +17,7 @@ EPUB 内部目录：
 │   └── ...
 └── Text                 # 文本
     ├── about.xhtml      # 本项目自动生成
-	└── lightnovel.xhtml # 轻小说正文
+    └── lightnovel.xhtml # 轻小说正文
 ```
 
 ## Requirements
