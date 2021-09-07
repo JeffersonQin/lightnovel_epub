@@ -96,7 +96,7 @@ class LightNovel():
 			for author in self.authors:
 				book.add_author(author=author)
 		
-		if (self.identifier is not None):
+		if (self.identifier is not None and self.identifier != ''):
 			book.set_identifier(self.identifier)
 
 		book.set_title(self.title)
