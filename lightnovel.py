@@ -130,7 +130,7 @@ class LightNovel():
 			book.add_item(image)
 
 		# set cover
-		if self.cover_link is not None:
+		if self.cover_link is not None and self.cover_link != '':
 			if str(self.cover_link).startswith('http'):
 				cover_name = self.cover_link.split('?')[0].split('/')[-1]
 				res = download.download_file(self.cover_link, cover_name)
