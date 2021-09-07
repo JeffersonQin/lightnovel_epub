@@ -13,7 +13,20 @@ def download_file(url, dir):
 	echo.clog(f'start downloading: {url} => {dir}')
 	try:
 		# define request headers
-		headers = {'Proxy-Connection':'keep-alive'}
+		headers = {
+			'accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+			'accept-encoding': 'gzip, deflate, br',
+			'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+			'cache-control': 'no-cache',
+			'pragma': 'no-cache',
+			'referer': 'https://www.lightnovel.us/',
+			'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Microsoft Edge";v="92"',
+			'sec-ch-ua-mobile': '?0',
+			'sec-fetch-dest': 'image',
+			'sec-fetch-mode': 'no-cors',
+			'sec-fetch-site': 'same-site',
+			'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.84',
+		}
 		# start and block request
 		r = requests.get(url, stream=True, headers=headers)
 		# obtain content length
@@ -29,10 +42,11 @@ def download_file(url, dir):
 					bar.update(len(chunk))
 		echo.csuccess('Download Complete.')
 		f.close()
+		return 1
 	except Exception as err:
 		echo.cerr(f'error: {repr(err)}')
 		traceback.print_exc()
-		echo.cexit('DOWNLOAD FAILED')
+		return 0
 	finally:
 		echo.pop_subroutine()
 
