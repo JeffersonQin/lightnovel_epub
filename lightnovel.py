@@ -138,6 +138,8 @@ class LightNovel():
 					echo.cerr(f'download cover failed: {link}')
 				else:
 					book.set_cover(cover_name, open(cover_name, 'rb').read())
+			elif os.path.exists(self.cover_link):
+				book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
 		elif first_file is not None:
 			book.set_cover(first_file, open(first_file, 'rb').read())
 		
