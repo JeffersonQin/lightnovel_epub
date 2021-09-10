@@ -44,7 +44,7 @@ def download_file(url, dir):
 		f.close()
 		return 1
 	except Exception as err:
-		echo.cerr(f'error: {repr(err)}')
+		echo.cerr(f'Error: {repr(err)}')
 		traceback.print_exc()
 		return 0
 	finally:

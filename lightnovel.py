@@ -89,74 +89,106 @@ class LightNovel():
 		'''
 		generate the ebook to `path`
 		'''
-		# create epub book
-		book = epub.EpubBook()
-		
-		# set metadata
-		if (len(self.authors) > 0):
-			for author in self.authors:
-				book.add_author(author=author)
-		
-		if (self.identifier is not None and self.identifier != ''):
-			book.set_identifier(self.identifier)
+		echo.push_subroutine(sys._getframe().f_code.co_name)
 
-		book.set_title(self.title)
-		book.set_language('zh-CN')
+		echo.clog(f'start generating...')
+
+		try:
+			# create epub book
+			book = epub.EpubBook()
+			
+			# set metadata
+			if (len(self.authors) > 0):
+				for author in self.authors:
+					book.add_author(author=author)
+			
+			if (self.identifier is not None and self.identifier != ''):
+				book.set_identifier(self.identifier)
+
+			book.set_title(self.title)
+			book.set_language('zh-CN')
+		except Exception as e:
+			echo.cerr(f'Error: {repr(e)}')
+			traceback.print_exc()
+			echo.cexit('CREATING EPUB BOOK FAILED')
 		
 		# parse images
-		soup = BeautifulSoup(self.content, 'lxml')
-		image_tags = soup.find_all('img')
+		try:
+			soup = BeautifulSoup(self.content, 'lxml')
+			image_tags = soup.find_all('img')
+		except Exception as e:
+			echo.cerr(f'Error: {repr(e)}')
+			traceback.print_exc()
+			echo.cexit('PARSING HTML FAILED')
 
 		# store images
 		first_flag = True # flag for storing first image
 		first_name = None # name of first downloaded image
 		first_dir = None # dir of first downloaded image
 
-		for tag in image_tags:
-			# parse
-			link = str(tag.attrs['src'])
-			file_name = link.split('?')[0].split('/')[-1]
-			file_dir = os.path.join(tempfile.gettempdir(), file_name)
-			# download
-			res = download.download_file(link, file_dir)
-			if (res == 0):
-				echo.cerr(f'download {link} failed.')
-				continue
-			elif first_flag:
-				first_name = file_name
-				first_dir = file_dir
-				first_flag = False
-			# convert href
-			tag.attrs['src'] = f'../Images/{file_name}'
-			image = epub.EpubImage()
-			image.file_name = f'Images/{file_name}'
-			image.content = open(file_dir, 'rb').read()
-			book.add_item(image)
+		try:
+			i = 0
+			for tag in image_tags:
+				i = i + 1
+				echo.clog(f'Downloading images: ({i} / {len(image_tags)})')
+				# parse
+				link = str(tag.attrs['src'])
+				file_name = link.split('?')[0].split('/')[-1]
+				file_dir = os.path.join(tempfile.gettempdir(), file_name)
+				# download
+				res = download.download_file(link, file_dir)
+				if (res == 0):
+					echo.cerr(f'download {link} failed.')
+					continue
+				elif first_flag:
+					first_name = file_name
+					first_dir = file_dir
+					first_flag = False
+				# convert href
+				tag.attrs['src'] = f'../Images/{file_name}'
+				image = epub.EpubImage()
+				image.file_name = f'Images/{file_name}'
+				image.content = open(file_dir, 'rb').read()
+				book.add_item(image)
+		except Exception as e:
+			echo.cerr(f'Error: {repr(e)}')
+			traceback.print_exc()
+			echo.cexit('DOWNLOADING IMAGES FAILED')
 
 		# set cover
-		if self.cover_link is not None and self.cover_link != '':
-			if str(self.cover_link).startswith('http'):
-				cover_name = self.cover_link.split('?')[0].split('/')[-1]
-				res = download.download_file(self.cover_link, cover_name)
-				if (res == 0):
-					echo.cerr(f'download cover failed: {link}')
-				else:
-					book.set_cover(cover_name, open(cover_name, 'rb').read())
-			elif os.path.exists(self.cover_link):
-				book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
-		elif first_dir is not None:
-			book.set_cover(first_name, open(first_dir, 'rb').read())
+		try:
+			if self.cover_link is not None and self.cover_link != '':
+				if str(self.cover_link).startswith('http'):
+					cover_name = self.cover_link.split('?')[0].split('/')[-1]
+					res = download.download_file(self.cover_link, cover_name)
+					if (res == 0):
+						echo.cerr(f'download cover failed: {link}')
+					else:
+						book.set_cover(cover_name, open(cover_name, 'rb').read())
+				elif os.path.exists(self.cover_link):
+					book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
+			elif first_dir is not None:
+				book.set_cover(first_name, open(first_dir, 'rb').read())
+		except Exception as e:
+			echo.cerr(f'Error: {repr(e)}')
+			traceback.print_exc()
+			echo.cexit('SETTING COVER IMAGE FAILED')
 		
-		# set content
-		about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content='<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p>')
-		main_content = epub.EpubHtml(title=self.title, file_name='Text/lightnovel.xhtml', lang='zh-CN', content=str(soup))
+		try:
+			# set content
+			about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content='<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p>')
+			main_content = epub.EpubHtml(title=self.title, file_name='Text/lightnovel.xhtml', lang='zh-CN', content=str(soup))
 
-		book.add_item(about_content)
-		book.add_item(main_content)
+			book.add_item(about_content)
+			book.add_item(main_content)
 
-		# configure book
-		book.toc = (about_content, main_content)
-		book.spine = [about_content, main_content]
+			# configure book
+			book.toc = (about_content, main_content)
+			book.spine = [about_content, main_content]
 
-		# generate book
-		epub.write_epub(os.path.join(path, f'{self.title}.epub'), book, {})
+			# generate book
+			epub.write_epub(os.path.join(path, f'{self.title}.epub'), book, {})
+		except Exception as e:
+			echo.cerr(f'Error: {repr(e)}')
+			traceback.print_exc()
+			echo.cexit('BOOK CONFIGURATION & GENERATION FAILED')
