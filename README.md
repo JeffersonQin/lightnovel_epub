@@ -73,3 +73,7 @@ Options:
 - [ ] 自动生成目录，~~如果网页上有 headers 的话~~
 - [ ] 添加自定义 CSS / 字体 等支持
 - [ ] 简繁自动转换
+
+相关帖子：
+* https://www.v2ex.com/t/800508
+* https://www.lightnovel.us/cn/themereply/1088005
