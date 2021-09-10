@@ -65,7 +65,7 @@ Options:
 
 ## TODO
 
-- [ ] 图片下载至临时路径
+- [x] 图片下载至临时路径
 - [ ] 用 PyQt 写 GUI
 - [ ] 为漫画提供更好的支持
 - [ ] 增加更多 `metadata` : `tags`, `publisher`, ...

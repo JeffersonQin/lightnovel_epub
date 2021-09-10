@@ -2,6 +2,7 @@ import os
 import sys
 import requests
 import traceback
+import tempfile
 from bs4 import BeautifulSoup
 from ebooklib import epub
 
@@ -108,25 +109,28 @@ class LightNovel():
 
 		# store images
 		first_flag = True # flag for storing first image
-		first_file = None # dir of first downloaded image
+		first_name = None # name of first downloaded image
+		first_dir = None # dir of first downloaded image
 
 		for tag in image_tags:
 			# parse
 			link = str(tag.attrs['src'])
 			file_name = link.split('?')[0].split('/')[-1]
+			file_dir = os.path.join(tempfile.gettempdir(), file_name)
 			# download
-			res = download.download_file(link, file_name)
+			res = download.download_file(link, file_dir)
 			if (res == 0):
 				echo.cerr(f'download {link} failed.')
 				continue
 			elif first_flag:
-				first_file = file_name
+				first_name = file_name
+				first_dir = file_dir
 				first_flag = False
 			# convert href
 			tag.attrs['src'] = f'../Images/{file_name}'
 			image = epub.EpubImage()
 			image.file_name = f'Images/{file_name}'
-			image.content = open(file_name, 'rb').read()
+			image.content = open(file_dir, 'rb').read()
 			book.add_item(image)
 
 		# set cover
@@ -140,8 +144,8 @@ class LightNovel():
 					book.set_cover(cover_name, open(cover_name, 'rb').read())
 			elif os.path.exists(self.cover_link):
 				book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
-		elif first_file is not None:
-			book.set_cover(first_file, open(first_file, 'rb').read())
+		elif first_dir is not None:
+			book.set_cover(first_name, open(first_dir, 'rb').read())
 		
 		# set content
 		about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content='<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p>')
