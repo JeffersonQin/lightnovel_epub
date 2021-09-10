@@ -160,11 +160,12 @@ class LightNovel():
 			if self.cover_link is not None and self.cover_link != '':
 				if str(self.cover_link).startswith('http'):
 					cover_name = self.cover_link.split('?')[0].split('/')[-1]
-					res = download.download_file(self.cover_link, cover_name)
+					cover_dir = os.path.join(tempfile.gettempdir(), cover_name)
+					res = download.download_file(self.cover_link, cover_dir)
 					if (res == 0):
 						echo.cerr(f'download cover failed: {link}')
 					else:
-						book.set_cover(cover_name, open(cover_name, 'rb').read())
+						book.set_cover(cover_name, open(cover_dir, 'rb').read())
 				elif os.path.exists(self.cover_link):
 					book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
 			elif first_dir is not None:
