@@ -14,6 +14,11 @@ class LightNovel():
 	object of light novel
 	'''
 	
+	url = ''
+	'''
+	url of web page
+	'''
+
 	authors = []
 	'''
 	author (Optional)
@@ -45,12 +50,23 @@ class LightNovel():
 		'''
 		initialize light novel object
 		'''
+		self.url = url
+		if authors is not None: self.authors = authors
+		if identifier is not None: self.identifier = identifier
+		if title is not None: self.title = title
+		if cover_link is not None: self.cover_link = cover_link
+
+
+	def download_content(self):
+		'''
+		download web content
+		'''
 		echo.push_subroutine(sys._getframe().f_code.co_name)
 
-		echo.clog(f'start downloading: {url} => memory')
+		echo.clog(f'start downloading: {self.url} => memory')
 		# download
 		try:
-			res = requests.get(url=url, headers={
+			res = requests.get(url=self.url, headers={
 				'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 				'accept-encoding': 'gzip, deflate, br',
 				'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
@@ -78,11 +94,8 @@ class LightNovel():
 			echo.cerr(f'error: {repr(e)}')
 			traceback.print_exc()
 			echo.cexit('PARSING FAILED')
-		
-		if authors is not None: self.authors = authors
-		if identifier is not None: self.identifier = identifier
-		if title is not None: self.title = title
-		if cover_link is not None: self.cover_link = cover_link
+
+		echo.pop_subroutine()
 
 
 	def write_epub(self, path: str):
@@ -193,3 +206,5 @@ class LightNovel():
 			echo.cerr(f'Error: {repr(e)}')
 			traceback.print_exc()
 			echo.cexit('BOOK CONFIGURATION & GENERATION FAILED')
+		
+		echo.pop_subroutine()

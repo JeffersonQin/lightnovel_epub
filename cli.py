@@ -33,7 +33,9 @@ def download(title: str, authors: str, identifier: str, cover_link: str, url: st
 		identifier = input('(optional) Input identifier of light novel: ')
 	if cover_link is None:
 		cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
-	LightNovel(url=url, authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link).write_epub(path)
+	novel = LightNovel(url=url, authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
+	novel.download_content()
+	novel.write_epub(path)
 
 
 if __name__ == '__main__':
