@@ -190,7 +190,7 @@ class LightNovel():
 		
 		try:
 			# set content
-			about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content='<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p>')
+			about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据<a href="{self.url}">{self.url}</a>生成</p>')
 			main_content = epub.EpubHtml(title=self.title, file_name='Text/lightnovel.xhtml', lang='zh-CN', content=str(soup))
 
 			book.add_item(about_content)
