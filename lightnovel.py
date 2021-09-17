@@ -8,6 +8,7 @@ from ebooklib import epub
 
 from utils import echo
 from utils import download
+from utils.checker import is_not_null, is_null
 
 class LightNovel():
 	'''
@@ -111,11 +112,11 @@ class LightNovel():
 			book = epub.EpubBook()
 			
 			# set metadata
-			if (len(self.authors) > 0):
+			if is_not_null(self.authors):
 				for author in self.authors:
 					book.add_author(author=author)
 			
-			if (self.identifier is not None and self.identifier != ''):
+			if is_not_null(self.identifier):
 				book.set_identifier(self.identifier)
 
 			book.set_title(self.title)
@@ -170,7 +171,7 @@ class LightNovel():
 
 		# set cover
 		try:
-			if self.cover_link is not None and self.cover_link != '':
+			if is_not_null(self.cover_link):
 				if str(self.cover_link).startswith('http'):
 					cover_name = self.cover_link.split('?')[0].split('/')[-1]
 					cover_dir = os.path.join(tempfile.gettempdir(), cover_name)
