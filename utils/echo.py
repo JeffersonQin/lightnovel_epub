@@ -23,9 +23,16 @@ def get_subroutine():
 	return subroutine_stack[-1]
 
 
-def clog(message: str):
+def _clog(message: str):
 	click.echo(click.style(f"[{get_subroutine()}]", bg='magenta', fg='white'), nl=False)
-	click.echo(f" {message}")
+	click.echo(message)
+
+
+def clog(*messages):
+	val = ''
+	for message in messages:
+		val = val + ' ' + str(message)
+	_clog(val)
 
 
 def cerr(message: str):
