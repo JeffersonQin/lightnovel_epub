@@ -10,7 +10,7 @@ import traceback
 import click
 import dominate
 from utils import echo
-
+from lightnovel import LightNovel
 
 # define constants
 TOP_AREA_HEIGHT = 325
@@ -111,7 +111,7 @@ def get_image(x1, y1, x2, y2) -> Image:
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 	try:
 		# click center of image
-		click_x = (x1 + x2) / 2
+		click_x = x1 * 0.7 + x2 * 0.3
 		click_y = (y1 + y2) / 2
 		if click_y > d.info['displayHeight'] - BOTTOM_AREA_HEIGHT or click_y < TOP_AREA_HEIGHT: 
 			if y1 < TOP_AREA_HEIGHT:
@@ -398,13 +398,25 @@ def cli():
 @click.option('--dump-path', type=click.Path(exists=True), default='./dump', help='directory for dumping')
 @click.option('--vert-dump', type=click.Path(exists=True), default=None, help='vertical content dump file path')
 @click.option('--horz-dump', type=click.Path(exists=True), default=None, help='horizontal content dump file path')
+@click.option('--html-dump', type=click.Path(exists=True), default=None, help='html content dump file path')
+@click.option('--title', default=None, help='title of light novel')
+@click.option('--authors', default=None, help='authors\' names, separated by comma (,)')
+@click.option('--identifier', default=None, help='identifier of light novel')
+@click.option('--cover-link', default=None, help='cover_link of light novel. cover_link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.')
+@click.option('--path', type=click.Path(exists=True), default='./', help='directory for saving the light novel')
 def dump(top_area_height, 
 		bottom_area_height, 
 		image_equal_threshold, 
 		safe_area_padding, 
 		dump_path, 
 		vert_dump, 
-		horz_dump):
+		horz_dump,
+		html_dump,
+		title: str, 
+		authors: str, 
+		identifier: str, 
+		cover_link: str, 
+		path: str):
 	"""
 	dump the contents to a file
 	:param top_area_height: the height of the top area
@@ -414,7 +426,13 @@ def dump(top_area_height,
 	:param dump_path: directory for dumping
 	:param vert_dump: vertical content dump file path
 	:param horz_dump: horizontal content dump file path
-	:return: dumped html file name
+	:param html_dump: html content dump file path
+	:param title: title of light novel
+	:param authors: authors' names, separated by comma (,)
+	:param identifier: identifier of light novel
+	:param cover_link: cover_link of light novel. cover_link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.
+	:param path: directory for saving the light novel
+	:return: None
 	"""
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 	global TOP_AREA_HEIGHT
@@ -432,95 +450,114 @@ def dump(top_area_height,
 		# init directory
 		if not os.path.exists(dump_path):
 			os.mkdir(dump_path)
-
-		# load and dump data
-		if vert_dump is not None:
-			vert_contents = load_contents(vert_dump)
-			echo.clog('Loaded vertical contents from', vert_dump)
+		if html_dump is not None:
+			with open(html_dump, 'r', encoding='utf-8') as f:
+				html_content = f.read()
 		else:
-			rotate2portrait()
-			echo.clog('Please make sure that the orientation is portrait **before** entering the app. If not, please quit and re-enter the page. Press <Enter> when ready ...')
-			input()
-			vert_contents = get_content()
-			echo.clog('Got vertical contents')
-			dump_contents(vert_contents)
-		if horz_dump is not None:
-			horz_contents = load_contents(horz_dump)
-			echo.clog('Loaded horizontal contents from', horz_dump)
-		else:
-			rotate2landscape()			
-			print('==========================')
-			print('==========================')
-			echo.clog('Please quit and re-enter the page. Press <Enter> when ready ...')
-			input()
-			horz_contents = get_content()
-			echo.clog('Got horizontal contents')
-			dump_contents(horz_contents)
-		# recalculate typesettings
-		echo.clog('Recalculating typesettings ...')
+			# load and dump data
+			if vert_dump is not None:
+				vert_contents = load_contents(vert_dump)
+				echo.clog('Loaded vertical contents from', vert_dump)
+				print(vert_contents)
+			else:
+				rotate2portrait()
+				echo.clog('Please make sure that the orientation is portrait **before** entering the app. If not, please quit and re-enter the page. Press <Enter> when ready ...')
+				input()
+				vert_contents = get_content()
+				echo.clog('Got vertical contents')
+				dump_contents(vert_contents)
+			if horz_dump is not None:
+				horz_contents = load_contents(horz_dump)
+				echo.clog('Loaded horizontal contents from', horz_dump)
+				print(horz_contents)
+			else:
+				rotate2landscape()			
+				print('==========================')
+				print('==========================')
+				echo.clog('Please quit and re-enter the page. Press <Enter> when ready ...')
+				input()
+				horz_contents = get_content()
+				echo.clog('Got horizontal contents')
+				dump_contents(horz_contents)
+			# recalculate typesettings
+			echo.clog('Recalculating typesettings ...')
 
-		vert_ptr = horz_ptr = 0
-		new_contents = []
-		vert_str = horz_str = ''
-		while horz_ptr < len(horz_contents):
-			this_horz = horz_contents[horz_ptr]
-			if type(this_horz) == Image:
-				if not horz_str.startswith(vert_str):
-					raise Exception('Unexpected content')
-				else:
-					# string cleaned up
-					if not (horz_str == '' and vert_str == ''):
+			vert_ptr = horz_ptr = 0
+			new_contents = []
+			vert_str = horz_str = ''
+			while horz_ptr < len(horz_contents):
+				this_horz = horz_contents[horz_ptr]
+				if type(this_horz) == Image:
+					if not horz_str.startswith(vert_str):
+						raise Exception('Unexpected content')
+					else:
+						# string cleaned up
+						if not (horz_str == '' and vert_str == ''):
+							new_contents.append(horz_str)
+							horz_str = vert_str = ''
+						while not type(vert_contents[vert_ptr]) == Image:
+							vert_ptr += 1
+						# compare which image is larger
+						this_vert = vert_contents[vert_ptr]
+						if this_vert.shape[0] * this_vert.shape[1] > \
+							this_horz.shape[0] * this_horz.shape[1]:
+							new_contents.append(this_vert)
+						else:
+							new_contents.append(this_horz)
+						horz_ptr += 1
+						vert_ptr += 1
+						continue
+				elif type(this_horz) == str:
+					horz_str += this_horz
+					horz_ptr += 1
+
+					while vert_ptr < len(vert_contents) and len(vert_str) < len(horz_str):
+						this_vert = vert_contents[vert_ptr]
+						if type(this_vert) != str:
+							raise Exception('Unexpected content')
+						vert_str += this_vert
+						vert_ptr += 1
+					
+					if horz_str == vert_str:
 						new_contents.append(horz_str)
 						horz_str = vert_str = ''
-					while not type(vert_contents[vert_ptr]) == Image:
-						vert_ptr += 1
-					# compare which image is larger
-					this_vert = vert_contents[vert_ptr]
-					if this_vert.shape[0] * this_vert.shape[1] > \
-						this_horz.shape[0] * this_horz.shape[1]:
-						new_contents.append(this_vert)
-					else:
-						new_contents.append(this_horz)
-					horz_ptr += 1
-					vert_ptr += 1
-					continue
-			elif type(this_horz) == str:
-				horz_str += this_horz
-				horz_ptr += 1
-
-				while vert_ptr < len(vert_contents) and len(vert_str) < len(horz_str):
-					this_vert = vert_contents[vert_ptr]
-					if type(this_vert) != str:
-						raise Exception('Unexpected content')
-					vert_str += this_vert
-					vert_ptr += 1
-				
-				if horz_str == vert_str:
-					new_contents.append(horz_str)
-					horz_str = vert_str = ''
-					continue
-			else:
-				raise Exception('Unknown type:', type(this_horz))
-
-		dump_contents(new_contents)
-
-		doc = dominate.document(title='HTML of LK generated by JeffersonQin/lightnovel_epub')
-
-		with doc:
-			for content in new_contents:
-				if isinstance(content, str):
-					dominate.tags.p(content)
-				elif isinstance(content, Image):
-					img = dominate.tags.img(src=os.path.abspath(content.filePath))
-					img.attributes['style'] = 'width: 100%;'
+						continue
 				else:
-					raise Exception('Unknown type:', type(content))
+					raise Exception('Unknown type:', type(this_horz))
 
-		html_path = os.path.join(DUMP_PATH, f'./{time.time_ns()}.html')
-		with open(html_path, 'w+', encoding='utf-8') as f:
-			f.write(doc.render())
-		echo.clog('Dumped HTML to', html_path)
-		return html_path
+			dump_contents(new_contents)
+
+			doc = dominate.document(title='HTML of LK generated by JeffersonQin/lightnovel_epub')
+
+			with doc:
+				for content in new_contents:
+					if isinstance(content, str):
+						dominate.tags.p(content)
+					elif isinstance(content, Image):
+						img = dominate.tags.img(src=os.path.abspath(content.filePath))
+						img.attributes['style'] = 'width: 100%;'
+					else:
+						raise Exception('Unknown type:', type(content))
+			html_content = doc.render()
+
+			html_path = os.path.join(DUMP_PATH, f'./{time.time_ns()}.html')
+			with open(html_path, 'w+', encoding='utf-8') as f:
+				f.write(html_content)
+			echo.clog('Dumped HTML to', html_path)
+		
+		# generate epub
+		if title is None:
+			title = input('Input title of light novel: ')
+		if authors is None:
+			authors = input('(optional) Input authors\' names, separated by comma (,): ')
+		if identifier is None:
+			identifier = input('(optional) Input identifier of light novel: ')
+		if cover_link is None:
+			cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
+		novel = LightNovel(url='', authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
+		novel.content = html_content
+		novel.write_epub(path)
+
 	except Exception as e:
 		echo.cerr(f'Error: {repr(e)}')
 		traceback.print_exc()
