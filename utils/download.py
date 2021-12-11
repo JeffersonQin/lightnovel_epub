@@ -46,7 +46,7 @@ def download_file(url, dir):
 	except Exception as err:
 		echo.cerr(f'Error: {repr(err)}')
 		traceback.print_exc()
-		return 0
+		echo.cexit('DOWNLOAD FILE FAILED')
 	finally:
 		echo.pop_subroutine()
 

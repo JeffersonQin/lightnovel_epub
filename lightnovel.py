@@ -144,17 +144,19 @@ class LightNovel():
 			i = 0
 			for tag in image_tags:
 				i = i + 1
-				echo.clog(f'Downloading images: ({i} / {len(image_tags)})')
+				echo.clog(f'Processing images: ({i} / {len(image_tags)})')
 				# parse
 				link = str(tag.attrs['src'])
-				file_name = link.split('?')[0].split('/')[-1]
-				file_dir = os.path.join(tempfile.gettempdir(), file_name)
-				# download
-				res = download.download_file(link, file_dir)
-				if (res == 0):
-					echo.cerr(f'download {link} failed.')
-					continue
-				elif first_flag:
+
+				if link.startswith('http') or link.startswith('//'):
+					file_name = link.split('?')[0].split('/')[-1]
+					file_dir = os.path.join(tempfile.gettempdir(), file_name)
+					# download
+					res = download.download_file(link, file_dir)
+				else:
+					file_name = os.path.basename(link)
+					file_dir = link
+				if first_flag:
 					first_name = file_name
 					first_dir = file_dir
 					first_flag = False
@@ -167,7 +169,7 @@ class LightNovel():
 		except Exception as e:
 			echo.cerr(f'Error: {repr(e)}')
 			traceback.print_exc()
-			echo.cexit('DOWNLOADING IMAGES FAILED')
+			echo.cexit('PROCESSING IMAGES FAILED')
 
 		# set cover
 		try:
@@ -191,7 +193,11 @@ class LightNovel():
 		
 		try:
 			# set content
-			about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据<a href="{self.url}">{self.url}</a>生成</p>')
+			if is_not_null(self.url):
+				about_text = f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据<a href="{self.url}">{self.url}</a>生成</p>'
+			else:
+				about_text = f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据LK客户端内容生成</p>'
+			about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=about_text)
 			main_content = epub.EpubHtml(title=self.title, file_name='Text/lightnovel.xhtml', lang='zh-CN', content=str(soup))
 
 			book.add_item(about_content)
