@@ -71,6 +71,10 @@ Options:
 
 注意：命令的 `options` 可以直接忽略，因为执行命令后如果发现没有 `options` 会进行第二轮询问。
 
+## Known Issues
+
+* 对于部分 **先显示无权限观看**，**后可以观看** 的文章无效，以后可能会写浏览器模式
+
 # `mobile.py`
 
 ## 使用场景
@@ -79,9 +83,11 @@ Options:
 
 ## 原理
 
-对 app 模拟手的操作，获取元素，最后生成 epub。
+对 app 模拟手的滚动操作，同时获取元素，最后生成 epub。
 
 注意到：客户端非常恶心，每一行文本都是一个 View，所以我采用了 Portrait 和 Landscape 扫两遍，然后双指针 Merge 的思路来进行对抗，效果喜人。
+
+![](./assets/text-split.png)
 
 ## 使用方法
 
@@ -93,6 +99,10 @@ Options:
 * `--bottom-area-height`: 设备下方评论栏的高度
 * 上面两个参数默认值为分辨率是 **3840 * 2160** 的情况
 * 其余的可以保持默认，有兴趣可以研究
+
+<div align="center">
+	<img src="./assets/mobile-params.png" width=300>
+</div>
 
 生成命令：
 
@@ -128,8 +138,16 @@ Options:
 * 最开始进入页面之前屏幕应为 Portrait 状态，命令行会要求用户确认
 * Portrait 扫描完成之后，设备会自动进入 Landscape 状态，但是需要用户退出界面并重新进入，原因是需要 Layout 重新加载。这一步同样会要求用户确认
 * 由于图片的获取是通过截图，所以建议将分辨率调高
+* 由于整个过程耗时长，可能出现意外状况，故有若干 `dump` 命令。`--vert-dump` 可以加载之前操作获取的 Portrait (Vertical) 数据，`--horz-dump` 可以加载之前操作获取的 Landscape (Horizontal) 数据，`--html-dump` 可以加载之前导出的 `html` 数据
 
-## TODO
+![](assets/rotate-quit.png)
+
+## Known Issues
+
+* HTML 排版无法获取
+* 排版问题可能导致 Lanscape / Portrait 信息无法 Merge，如果遇到这种情况，找到任意一个 Case 的 `dump` 文件 (这里记作 `dump-file`)，并加上命令行参数：`--vert-dump <dump-file> --horz-dump <dump-file>`
+
+# TODO
 
 - [x] 图片下载至临时路径
 - [ ] 用 PyQt 写 GUI
