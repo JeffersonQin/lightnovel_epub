@@ -399,6 +399,8 @@ def cli():
 @click.option('--vert-dump', type=click.Path(exists=True), default=None, help='vertical content dump file path')
 @click.option('--horz-dump', type=click.Path(exists=True), default=None, help='horizontal content dump file path')
 @click.option('--html-dump', type=click.Path(exists=True), default=None, help='html content dump file path')
+@click.option('--conflict-mode', type=bool, default=False, help='whether to resolve conflict manually')
+@click.option('--ignore-newline', type=bool, default=True, help='whether to ignore newline')
 @click.option('--title', default=None, help='title of light novel')
 @click.option('--authors', default=None, help='authors\' names, separated by comma (,)')
 @click.option('--identifier', default=None, help='identifier of light novel')
@@ -412,6 +414,8 @@ def dump(top_area_height,
 		vert_dump, 
 		horz_dump,
 		html_dump,
+		conflict_mode: bool,
+		ignore_newline: bool, 
 		title: str, 
 		authors: str, 
 		identifier: str, 
@@ -427,6 +431,8 @@ def dump(top_area_height,
 	:param vert_dump: vertical content dump file path
 	:param horz_dump: horizontal content dump file path
 	:param html_dump: html content dump file path
+	:param conflict_mode: whether to resolve conflict manually
+	:param ignore_newline: whether to ignore newline
 	:param title: title of light novel
 	:param authors: authors' names, separated by comma (,)
 	:param identifier: identifier of light novel
@@ -482,6 +488,16 @@ def dump(top_area_height,
 			# recalculate typesettings
 			echo.clog('Recalculating typesettings ...')
 
+			if ignore_newline:
+				for i in range(len(vert_contents)):
+					if type(vert_contents[i]) == str:
+						vert_contents[i] = vert_contents[i].replace('\n', '')
+						vert_contents[i] = vert_contents[i].replace('\r', '')
+				for i in range(len(horz_contents)):
+					if type(horz_contents[i]) == str:
+						horz_contents[i] = horz_contents[i].replace('\n', '')
+						horz_contents[i] = horz_contents[i].replace('\r', '')
+
 			vert_ptr = horz_ptr = 0
 			new_contents = []
 			vert_str = horz_str = ''
@@ -489,24 +505,47 @@ def dump(top_area_height,
 				this_horz = horz_contents[horz_ptr]
 				if type(this_horz) == Image:
 					if not horz_str.startswith(vert_str):
-						raise Exception('Unexpected content')
-					else:
-						# string cleaned up
-						if not (horz_str == '' and vert_str == ''):
-							new_contents.append(horz_str)
-							horz_str = vert_str = ''
-						while not type(vert_contents[vert_ptr]) == Image:
-							vert_ptr += 1
-						# compare which image is larger
-						this_vert = vert_contents[vert_ptr]
-						if this_vert.shape[0] * this_vert.shape[1] > \
-							this_horz.shape[0] * this_horz.shape[1]:
-							new_contents.append(this_vert)
+						if conflict_mode:
+							while not type(vert_contents[vert_ptr]) == Image:
+								this_vert = vert_contents[vert_ptr]
+								vert_str += this_vert
+								vert_ptr += 1
+							print('==========================')
+							echo.cerr('CONFLICT HAPPENED, choose which version to accept:')
+							echo.clog('Portrait (Vertical) Version:', vert_str)
+							echo.clog('Landscape (Horizontal) Version:', horz_str)
+							while True:
+								c = input('Enter "p" or "v" to accept portrait version, "l" or "h" to accept landscape version, or "q" to quit:')
+								if c == 'p' or c == 'v' or c == 'P' or c == 'V':
+									new_contents.append(vert_str)
+									horz_str = vert_str = ''
+									break
+								elif c == 'l' or c == 'h' or c == 'L' or c == 'H':
+									new_contents.append(horz_str)
+									horz_str = vert_str = ''
+									break
+								elif c == 'q' or c == 'Q':
+									echo.cexit('USER QUIT')
+								else:
+									echo.cerr('Invalid input, please try again')
 						else:
-							new_contents.append(this_horz)
-						horz_ptr += 1
+							raise Exception('Unexpected content')
+					# string cleaned up
+					if not (horz_str == '' and vert_str == ''):
+						new_contents.append(horz_str)
+						horz_str = vert_str = ''
+					while not type(vert_contents[vert_ptr]) == Image:
 						vert_ptr += 1
-						continue
+					# compare which image is larger
+					this_vert = vert_contents[vert_ptr]
+					if this_vert.shape[0] * this_vert.shape[1] > \
+						this_horz.shape[0] * this_horz.shape[1]:
+						new_contents.append(this_vert)
+					else:
+						new_contents.append(this_horz)
+					horz_ptr += 1
+					vert_ptr += 1
+					continue
 				elif type(this_horz) == str:
 					horz_str += this_horz
 					horz_ptr += 1
@@ -514,10 +553,38 @@ def dump(top_area_height,
 					while vert_ptr < len(vert_contents) and len(vert_str) < len(horz_str):
 						this_vert = vert_contents[vert_ptr]
 						if type(this_vert) != str:
-							raise Exception('Unexpected content')
+							if conflict_mode:
+								while not type(horz_contents[horz_ptr]) == Image:
+									this_horz = horz_contents[horz_ptr]
+									horz_str += horz_vert
+									horz_ptr += 1
+								print('==========================')
+								echo.cerr('CONFLICT HAPPENED, choose which version to accept:')
+								echo.clog('Portrait (Vertical) Version:', vert_str)
+								echo.clog('Landscape (Horizontal) Version:', horz_str)
+								while True:
+									c = input('Enter "p" or "v" to accept portrait version, "l" or "h" to accept landscape version, or "q" to quit:')
+									if c == 'p' or c == 'v' or c == 'P' or c == 'V':
+										new_contents.append(vert_str)
+										horz_str = vert_str = ''
+										break
+									elif c == 'l' or c == 'h' or c == 'L' or c == 'H':
+										new_contents.append(horz_str)
+										horz_str = vert_str = ''
+										break
+									elif c == 'q' or c == 'Q':
+										echo.cexit('USER QUIT')
+									else:
+										echo.cerr('Invalid input, please try again')
+								break
+							else:
+								raise Exception('Unexpected content')
 						vert_str += this_vert
 						vert_ptr += 1
-					
+
+					if conflict_mode and horz_str == '' and vert_str == '':
+						continue
+
 					if horz_str == vert_str:
 						new_contents.append(horz_str)
 						horz_str = vert_str = ''
