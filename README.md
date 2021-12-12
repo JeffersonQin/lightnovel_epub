@@ -1,6 +1,6 @@
 # lightnovel_epub
 
-本工具用于基于[轻之国度](https://lightnovel.us)网页生成`epub`小说。
+本工具用于基于[轻之国度](https://lightnovel.us)网页或 app 生成`epub`小说。
 
 **注意：本工具仅作学习交流使用，作者不对内容和使用情况付任何责任！**
 
