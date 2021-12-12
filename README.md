@@ -91,7 +91,11 @@ Options:
 
 ## 使用方法
 
+### Prerequisite
+
 首先，不管是模拟器还是真机，都需要开启 ADB。现在的代码只适用于只有一个 ADB 设备的情况，如果有需求，请自行修改 `mobile.py`。
+
+### 重要参数
 
 需要留意的参数：
 
@@ -104,7 +108,7 @@ Options:
 	<img src="./assets/mobile-params.png" width=300>
 </div>
 
-生成命令：
+### 生成命令
 
 ```
 $ python .\mobile.py dump --help
@@ -121,6 +125,8 @@ Options:
   --vert-dump PATH                vertical content dump file path
   --horz-dump PATH                horizontal content dump file path
   --html-dump PATH                html content dump file path
+  --conflict-mode BOOLEAN         whether to resolve conflict manually
+  --ignore-newline BOOLEAN        whether to ignore newline
   --title TEXT                    title of light novel
   --authors TEXT                  authors' names, separated by comma (,)
   --identifier TEXT               identifier of light novel
@@ -134,7 +140,8 @@ Options:
   --help                          Show this message and exit.
 ```
 
-注意：
+### 注意事项
+
 * 最开始进入页面之前屏幕应为 Portrait 状态，命令行会要求用户确认
 * Portrait 扫描完成之后，设备会自动进入 Landscape 状态，但是需要用户退出界面并重新进入，原因是需要 Layout 重新加载。这一步同样会要求用户确认
 * 由于图片的获取是通过截图，所以建议将分辨率调高
@@ -142,10 +149,45 @@ Options:
 
 ![](assets/rotate-quit.png)
 
+### 关于 `--new-line` 和 `--conflict-mode`
+
+这两个参数的诞生和排版有着密切的关系。举个简单的例子：
+
+<div align="center">
+这是一前半段没有加粗的文字<b>这是中间加粗的文字</b>这是最后没有加粗的文字
+</div>
+
+如果上面这段话在同一行里，那么会解析成：
+
+```json
+[
+	"这是一前半段没有加粗的文字\n这是中间加粗的文字\n这是最后没有加粗的文字"
+]
+```
+
+但是，如果排版变成了：
+
+<div align="center">
+这是一前半段没有加粗的文字<b>这是中间加粗的文字</b><br/>这是最后没有加粗的文字
+</div>
+
+就会解析成：
+
+```json
+[
+	"这是一前半段没有加粗的文字\n这是中间加粗的文字", 
+	"这是最后没有加粗的文字"
+]
+```
+
+可以发现有一个 `\n` 就这样凭空消失了。这就会导致一个问题：双指针扫描匹配的时候永远无法找到同样的文字内容。为了解决这个问题，我引入了两个方案：
+1. `--ignore-newline`: 将文中所有出现的 `\n` 全部忽略，效果很好。但是同时，我们也丧失了知道哪里有排版的机会。
+2. `--conflict-mode`: 程序最初的版本如果遇到图片但是文字还没有合并，会直接报错。如果加上了 `--conflict-mode True` 就会在这个情况下让用户选择选择 Landscape 还是 Portrait 的版本。以后可能还会加上让用户手动输入的选项。
+
 ## Known Issues
 
 * HTML 排版无法获取
-* 排版问题可能导致 Lanscape / Portrait 信息无法 Merge，如果遇到这种情况，找到任意一个 Case 的 `dump` 文件 (这里记作 `dump-file`)，并加上命令行参数：`--vert-dump <dump-file> --horz-dump <dump-file>`
+* 【已解决】 ~~排版问题可能导致 Lanscape / Portrait 信息无法 Merge，如果遇到这种情况，找到任意一个 Case 的 `dump` 文件 (这里记作 `dump-file`)，并加上命令行参数：`--vert-dump <dump-file> --horz-dump <dump-file>`~~
 
 # TODO
 
