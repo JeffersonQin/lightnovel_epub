@@ -13,6 +13,7 @@
 * ebooklib
 * uiautomator2
 * dominate
+* opencc
 
 # `cli.py`
 
@@ -65,7 +66,13 @@ Options:
                      with "http", it would be recognized as file path. if
                      nothing was given, then it will use the first picture of
                      webpage.
-
+  --cvt TEXT         (optional) OpenCC conversion configuration, used to
+                     convert between different Chinese characters. you can
+                     choose the value from "s2t", "t2s", "s2tw", "tw2s",
+                     "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk",
+                     "t2jp", "jp2t", "tw2t". if nothing is provided, no
+                     conversion would be performed. for more information,
+                     please visit: https://github.com/BYVoid/OpenCC
   --help             Show this message and exit.
 ```
 
@@ -136,6 +143,15 @@ Options:
                                   recognized as file path. if nothing was
                                   given, then it will use the first picture of
                                   webpage.
+  --cvt TEXT                      OpenCC conversion configuration,
+                                  used to convert between different Chinese
+                                  characters. you can choose the value from
+                                  "s2t", "t2s", "s2tw", "tw2s", "s2hk",
+                                  "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t",
+                                  "t2hk", "t2jp", "jp2t", "tw2t". if nothing
+                                  is provided, no conversion would be
+                                  performed. for more information, please
+                                  visit: https://github.com/BYVoid/OpenCC
   --path PATH                     directory for saving the light novel
   --help                          Show this message and exit.
 ```
@@ -198,7 +214,7 @@ Options:
 - [ ] 自动抓取标题
 - [ ] 自动生成目录，~~如果网页上有 headers 的话~~
 - [ ] 添加自定义 CSS / 字体 等支持
-- [ ] 简繁自动转换
+- [x] 简繁自动转换
 - [x] 模拟轻国手机版
 - [ ] 增加图片压缩选项
 
