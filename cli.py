@@ -12,6 +12,8 @@ def cli():
 
 
 @cli.command()
+@click.option('--dump-path', type=click.Path(exists=True), default='./dump', help='directory for dumping')
+@click.option('--html-dump', type=click.Path(exists=True), default=None, help='html content dump file path')
 @click.option('--title', default=None, help='title of light novel')
 @click.option('--authors', default=None, help='authors\' names, separated by comma (,)')
 @click.option('--identifier', default=None, help='identifier of light novel')
@@ -19,9 +21,19 @@ def cli():
 @click.option('--cvt', default=None, help='OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC')
 @click.option('--path', type=click.Path(exists=True), default='./', help='directory for saving the light novel')
 @click.argument('url')
-def download(title: str, authors: str, identifier: str, cover_link: str, cvt: str, path: str, url: str):
+def download(dump_path, 
+			html_dump, 
+			title: str, 
+			authors: str, 
+			identifier: str, 
+			cover_link: str, 
+			cvt: str, 
+			path: str, 
+			url: str):
 	'''
 	download the light novel
+	:param dump_path: directory for dumping
+	:param html_dump: html content dump file path
 	:param title: title of light novel
 	:param authors: authors' names, separated by comma (,)
 	:param identifier: identifier of light novel
