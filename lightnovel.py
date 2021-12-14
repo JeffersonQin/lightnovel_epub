@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from ebooklib import epub
 
 from utils import echo
-from utils import download
+from utils import downloader
 from utils.checker import is_not_null, is_null
 
 class LightNovel():
@@ -107,14 +107,9 @@ class LightNovel():
 				# parse
 				link = str(tag.attrs['src'])
 
-				if link.startswith('http') or link.startswith('//'):
-					file_name = link.split('?')[0].split('/')[-1]
-					file_dir = os.path.join(tempfile.gettempdir(), file_name)
-					# download
-					res = download.download_file(link, file_dir)
-				else:
-					file_name = os.path.basename(link)
-					file_dir = link
+				file_name = os.path.basename(link)
+				file_dir = link
+				
 				if first_flag:
 					first_name = file_name
 					first_dir = file_dir
@@ -136,11 +131,8 @@ class LightNovel():
 				if str(self.cover_link).startswith('http'):
 					cover_name = self.cover_link.split('?')[0].split('/')[-1]
 					cover_dir = os.path.join(tempfile.gettempdir(), cover_name)
-					res = download.download_file(self.cover_link, cover_dir)
-					if (res == 0):
-						echo.cerr(f'download cover failed: {link}')
-					else:
-						book.set_cover(cover_name, open(cover_dir, 'rb').read())
+					downloader.download_file(self.cover_link, cover_dir)
+					book.set_cover(cover_name, open(cover_dir, 'rb').read())
 				elif os.path.exists(self.cover_link):
 					book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
 			elif first_dir is not None:

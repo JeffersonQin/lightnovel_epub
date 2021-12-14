@@ -8,7 +8,12 @@ import requests
 import opencc
 from bs4 import BeautifulSoup
 
+from utils import downloader
 from utils import echo
+
+
+DUMP_PATH = './dump'
+
 
 echo.init_subroutine()
 
@@ -16,6 +21,7 @@ echo.init_subroutine()
 def download_content(url):
 	'''
 	download web content
+	:param url: url to download
 	'''
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
@@ -52,6 +58,49 @@ def download_content(url):
 
 	return str(article)
 	echo.pop_subroutine()
+
+
+def download_images(content, dump_path):
+	"""
+	download images from content
+	:param content: html content
+	:param dump_path: path to dump updated html
+	:return:
+	"""
+	echo.push_subroutine(sys._getframe().f_code.co_name)
+	
+	echo.clog(f'Start Parsing Images')
+
+	# parse images
+	try:
+		soup = BeautifulSoup(content, 'lxml')
+		images = soup.find_all('img')
+	except Exception as e:
+		echo.cerr(f'Error: {repr(e)}')
+		traceback.print_exc()
+		echo.cexit('PARSING FAILED')
+	# download images
+	try:
+		i = 0
+		for tag in images:
+			i += 1
+			echo.clog(f'Processing images: ({i} / {len(images)})')
+			# parse
+			link = str(tag.attrs['src'])
+			if link.startswith('http') or link.startswith('//'):
+				file_name = link.split('?')[0].split('/')[-1]
+				file_dir = os.path.join(DUMP_PATH, file_name)
+				# download
+				downloader.download_file(link, file_dir)
+				# replace src
+				tag.attrs['src'] = os.path.abspath(file_dir)
+				# update html
+				with open(dump_path, 'w', encoding='utf-8') as f:
+					f.write(str(soup))
+	except Exception as e:
+		echo.cerr(f'error: {repr(e)}')
+		traceback.print_exc()
+		echo.cexit('DOWNLOAD FAILED')
 
 
 @click.group()
@@ -92,21 +141,26 @@ def download(dump_path,
 	:return: None
 	'''
 	echo.push_subroutine(sys._getframe().f_code.co_name)
+	global DUMP_PATH
+	DUMP_PATH = dump_path
 
 	try:
 		# init directory
 		if not os.path.exists(dump_path):
 			os.mkdir(dump_path)
+		# obtain html
 		if html_dump is not None:
 			with open(html_dump, 'r', encoding='utf-8') as f:
 				content = f.read()
 		else:
 			content = download_content(url)
-			html_path = os.path.join(dump_path, f'./{time.time_ns()}.html')
-			with open(html_path, 'w', encoding='utf-8') as f:
+			html_dump = os.path.join(DUMP_PATH, f'./{time.time_ns()}.html')
+			with open(html_dump, 'w', encoding='utf-8') as f:
 				f.write(content)
-			echo.clog(f'Dumped HTML to {html_path}')
-		
+			echo.clog(f'Dumped HTML to {html_dump}')
+		# download images
+		download_images(content, html_dump)
+
 		if title is None:
 			title = input('Input title of light novel: ')
 		if authors is None:
