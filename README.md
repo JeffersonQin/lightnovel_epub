@@ -21,6 +21,8 @@
 
 针对可以在浏览器里阅读的文章。
 
+2021/12/15 Update: 支持合集文章生成。
+
 ## 原理
 
 直接抓取 HTML，然后将其中的图片下载至本地，随后打包成 EPUB。
@@ -49,30 +51,31 @@ python3 cli.py download <link> <path>
 
 ```
 $ python3 cli.py download --help
-Usage: cli.py download [OPTIONS] URL PATH
+Usage: cli.py download [OPTIONS] URL
 
   download the light novel
 
   ARGUMENTS:
   * URL: url of light novel to download
-  * PATH: directory to store the light novel
 
 Options:
+  --dump-path PATH   directory for dumping
+  --html-dump PATH   html content dump file path
   --title TEXT       title of light novel
-  --authors TEXT     (optional) authors' names, separated by comma (,)
-  --identifier TEXT  (optional) identifier of light novel
-  --cover_link TEXT  (optional) cover_link of light novel. cover_link can
-                     either be web link or file path. if it is not beginned
-                     with "http", it would be recognized as file path. if
-                     nothing was given, then it will use the first picture of
-                     webpage.
-  --cvt TEXT         (optional) OpenCC conversion configuration, used to
-                     convert between different Chinese characters. you can
-                     choose the value from "s2t", "t2s", "s2tw", "tw2s",
-                     "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk",
-                     "t2jp", "jp2t", "tw2t". if nothing is provided, no
-                     conversion would be performed. for more information,
-                     please visit: https://github.com/BYVoid/OpenCC
+  --authors TEXT     authors' names, separated by comma (,)
+  --identifier TEXT  identifier of light novel
+  --cover-link TEXT  cover_link of light novel. cover_link can either be web
+                     link or file path. if it is not beginned with "http", it
+                     would be recognized as file path. if nothing was given,
+                     then it will use the first picture of webpage.
+  --cvt TEXT         OpenCC conversion configuration, used to convert between
+                     different Chinese characters. you can choose the value
+                     from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s",
+                     "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t",
+                     "tw2t". if nothing is provided, no conversion would be
+                     performed. for more information, please visit:
+                     https://github.com/BYVoid/OpenCC
+  --path PATH        directory for saving the light novel
   --help             Show this message and exit.
 ```
 

@@ -35,7 +35,7 @@ class LightNovel():
 	title of the book
 	'''
 
-	content = ''
+	contents = ''
 	'''
 	HTML content
 	'''
@@ -58,36 +58,17 @@ class LightNovel():
 		if cover_link is not None: self.cover_link = cover_link
 
 
-	def write_epub(self, path: str):
+	def process_image_content(self, content, book):
 		'''
-		generate the ebook to `path`
+		process image content
+		:param content: HTML content
+		:return: content, first image name and directory
 		'''
 		echo.push_subroutine(sys._getframe().f_code.co_name)
 
-		echo.clog(f'start generating...')
-
-		try:
-			# create epub book
-			book = epub.EpubBook()
-			
-			# set metadata
-			if is_not_null(self.authors):
-				for author in self.authors:
-					book.add_author(author=author)
-			
-			if is_not_null(self.identifier):
-				book.set_identifier(self.identifier)
-
-			book.set_title(self.title)
-			book.set_language('zh-CN')
-		except Exception as e:
-			echo.cerr(f'Error: {repr(e)}')
-			traceback.print_exc()
-			echo.cexit('CREATING EPUB BOOK FAILED')
-		
 		# parse images
 		try:
-			soup = BeautifulSoup(self.content, 'lxml')
+			soup = BeautifulSoup(content, 'lxml')
 			image_tags = soup.find_all('img')
 		except Exception as e:
 			echo.cerr(f'Error: {repr(e)}')
@@ -124,7 +105,54 @@ class LightNovel():
 			echo.cerr(f'Error: {repr(e)}')
 			traceback.print_exc()
 			echo.cexit('PROCESSING IMAGES FAILED')
+		
+		return soup, first_name, first_dir
 
+
+	def write_epub(self, path: str):
+		'''
+		generate the ebook to `path`
+		'''
+		echo.push_subroutine(sys._getframe().f_code.co_name)
+
+		echo.clog(f'start generating...')
+
+		try:
+			# create epub book
+			book = epub.EpubBook()
+			
+			# set metadata
+			if is_not_null(self.authors):
+				for author in self.authors:
+					book.add_author(author=author)
+			
+			if is_not_null(self.identifier):
+				book.set_identifier(self.identifier)
+
+			book.set_title(self.title)
+			book.set_language('zh-CN')
+		except Exception as e:
+			echo.cerr(f'Error: {repr(e)}')
+			traceback.print_exc()
+			echo.cexit('CREATING EPUB BOOK FAILED')
+		
+		if type(self.contents) == str:
+			soup, first_name, first_dir = self.process_image_content(self.contents, book)
+		elif type(self.contents) == list:
+			_contents = []
+			first_name = first_dir = None
+			for content in self.contents:
+				soup, _first_name, _first_dir = self.process_image_content(content['content'], book)
+				if first_name is None or first_dir is None:
+					first_name = _first_name
+					first_dir = _first_dir
+				_contents.append({
+					'content': str(soup),
+					'title': content['title'],
+				})
+		else:
+			echo.cexit('CONTENTS MUST BE STRING OR LIST')
+		
 		# set cover
 		try:
 			if is_not_null(self.cover_link):
@@ -148,15 +176,40 @@ class LightNovel():
 				about_text = f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据<a href="{self.url}">{self.url}</a>生成</p>'
 			else:
 				about_text = f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据LK客户端内容生成</p>'
-			about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=about_text)
-			main_content = epub.EpubHtml(title=self.title, file_name='Text/lightnovel.xhtml', lang='zh-CN', content=str(soup))
+			if type(self.contents) == str:
+				about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=about_text)
+				main_content = epub.EpubHtml(title=self.title, file_name='Text/lightnovel.xhtml', lang='zh-CN', content=str(soup))
 
-			book.add_item(about_content)
-			book.add_item(main_content)
+				book.add_item(about_content)
+				book.add_item(main_content)
 
-			# configure book
-			book.toc = (about_content, main_content)
-			book.spine = [about_content, main_content]
+				# configure book
+				book.toc = (about_content, main_content)
+				book.spine = [about_content, main_content]
+			elif type(self.contents) == list:
+				about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=about_text)
+				i = 0
+				epub_nav = ['nav']
+				epub_toc = []
+				epub_contents = []
+				for content in _contents:
+					i += 1
+					item = (epub.EpubHtml(title=content['title'], file_name=f'Text/Section{i}.xhtml', lang='zh-CN', content=content['content']))
+					epub_toc.append(item)
+					epub_nav.append(item)
+					epub_contents.append(item)
+				
+				for epub_content in epub_contents:
+					book.add_item(epub_content)
+
+				# configure book
+				book.toc = tuple(epub_toc)
+				
+				# add default NCX and Nav file
+				book.add_item(epub.EpubNcx())
+				book.add_item(epub.EpubNav())
+				
+				book.spine = epub_nav
 
 			# generate book
 			epub.write_epub(os.path.join(path, f'{self.title}.epub'), book, {})

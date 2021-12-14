@@ -559,7 +559,7 @@ def dump(top_area_height,
 							if conflict_mode:
 								while not type(horz_contents[horz_ptr]) == Image:
 									this_horz = horz_contents[horz_ptr]
-									horz_str += horz_vert
+									horz_str += this_horz
 									horz_ptr += 1
 								print('==========================')
 								echo.cerr('CONFLICT HAPPENED, choose which version to accept:')
@@ -625,11 +625,11 @@ def dump(top_area_height,
 		if cover_link is None:
 			cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
 		novel = LightNovel(url='', authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
-		novel.content = html_content
+		novel.contents = html_content
 
 		if cvt in ["s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t"]:
 			converter = opencc.OpenCC(f'{cvt}.json')
-			novel.content = converter.convert(novel.content)
+			novel.contents = converter.convert(novel.contents)
 
 		novel.write_epub(path)
 
