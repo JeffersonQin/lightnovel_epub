@@ -185,13 +185,16 @@ class LightNovel():
 
 				# configure book
 				book.toc = (about_content, main_content)
-				book.spine = [about_content, main_content]
+				# add default NCX and Nav file
+				book.add_item(epub.EpubNcx())
+				book.add_item(epub.EpubNav())
+				book.spine = ['nav', about_content, main_content]
 			elif type(self.contents) == list:
 				about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=about_text)
 				i = 0
-				epub_nav = ['nav']
-				epub_toc = []
-				epub_contents = []
+				epub_nav = ['nav', about_content]
+				epub_toc = [about_content]
+				epub_contents = [about_content]
 				for content in _contents:
 					i += 1
 					item = (epub.EpubHtml(title=content['title'], file_name=f'Text/Section{i}.xhtml', lang='zh-CN', content=content['content']))
@@ -199,6 +202,7 @@ class LightNovel():
 					epub_nav.append(item)
 					epub_contents.append(item)
 				
+				book.add_item(about_content)
 				for epub_content in epub_contents:
 					book.add_item(epub_content)
 
