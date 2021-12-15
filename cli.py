@@ -152,12 +152,14 @@ def process_article_page(url, dump_path, cvt=None):
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
 	try:
+		flag = True
 		# obtain html
 		if dump_path is not None:
 			if os.path.exists(dump_path):
 				with open(dump_path, 'r', encoding='utf-8') as f:
 					content = f.read()
-		else:
+				flag = False
+		if flag:
 			content = obtain_article_content(url)
 			if dump_path is None:
 				dump_path = os.path.join(DUMP_PATH, f'./{time.time_ns()}.html')
