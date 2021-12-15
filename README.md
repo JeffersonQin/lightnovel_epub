@@ -14,6 +14,7 @@
 * uiautomator2
 * dominate
 * opencc
+* js2py
 
 # `cli.py`
 
@@ -21,7 +22,8 @@
 
 针对可以在浏览器里阅读的文章。
 
-2021/12/15 Update: 支持合集文章生成。
+* 2021/12/15 Update: 支持合集文章生成。
+* 2021/12/15 Update: 支持 HTML 内嵌 base64 图片
 
 ## 原理
 
@@ -38,6 +40,44 @@ EPUB 内部目录：
     ├── about.xhtml      # 本项目自动生成
     └── lightnovel.xhtml # 轻小说正文
 ```
+
+对于合集文章：
+
+```
+.
+├── Images               # 图片
+│   ├── ...
+│   └── ...
+└── Text                 # 文本
+    ├── about.xhtml      # 本项目自动生成
+    ├── Section1.xhtml   # P1
+	├── Section2.xhtml   # P2
+	└── ...
+```
+
+此外，对于合集文章，解析的过程比较有趣，这里讨论一下。
+
+首先是对 HTML 的分析。
+
+![](./assets/series-inspector.png)
+
+很遗憾，并不是 `<a>` 也没有 `href`。去 `Source` 里一看，貌似框架选的是 `Vue`，不熟悉前端，不多做评价。
+
+接着查看 `event`，发现是混淆过的 `js`，放弃逆向。
+
+![](./assets/series-event.png)
+
+经观察，数据应该在文档最后的某个 `<script>` 标签内：
+
+![](./assets/series-script.png)
+
+经过分析，这个 `<script>` 只暴露了一个接口：
+
+```js
+window.__NUXT__ = (function(...) { ... }) (...)
+```
+
+故我们只需要 evaluate 这个脚本，然后获取 `window.__NUXT__` 的值即可。
 
 ## 使用方法
 
@@ -95,7 +135,7 @@ Options:
 
 - [x] 图片下载至临时路径
 - [ ] 用 PyQt 写 GUI
-- [ ] 为漫画提供更好的支持
+- [x] 为漫画提供更好的支持
 - [ ] 增加更多 `metadata` : `tags`, `publisher`, ...
 - [ ] 自动抓取标题
 - [ ] 自动生成目录，~~如果网页上有 headers 的话~~

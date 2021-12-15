@@ -3,6 +3,7 @@ import sys
 import requests
 import traceback
 import tempfile
+import base64
 from bs4 import BeautifulSoup
 from ebooklib import epub
 
@@ -62,7 +63,7 @@ class LightNovel():
 		'''
 		process image content
 		:param content: HTML content
-		:return: content, first image name and directory
+		:return: content, first image bytes
 		'''
 		echo.push_subroutine(sys._getframe().f_code.co_name)
 
@@ -77,8 +78,7 @@ class LightNovel():
 
 		# store images
 		first_flag = True # flag for storing first image
-		first_name = None # name of first downloaded image
-		first_dir = None # dir of first downloaded image
+		first_image = None
 
 		try:
 			i = 0
@@ -88,25 +88,31 @@ class LightNovel():
 				# parse
 				link = str(tag.attrs['src'])
 
-				file_name = os.path.basename(link)
-				file_dir = link
+				r_image = None
+
+				if link.startswith('data:'):
+					r_image = base64.decodebytes(link.split(';')[1].split(',')[1].encode('utf-8'))
+				else:
+					file_name = os.path.basename(link)
+					file_dir = link
+					
+					# convert href
+					tag.attrs['src'] = f'../Images/{file_name}'
+					image = epub.EpubImage()
+					image.file_name = f'Images/{file_name}'
+					image.content = open(file_dir, 'rb').read()
+					book.add_item(image)
+					r_image = image.content
 				
-				if first_flag:
-					first_name = file_name
-					first_dir = file_dir
+				if first_flag and r_image is not None:
+					first_image = r_image
 					first_flag = False
-				# convert href
-				tag.attrs['src'] = f'../Images/{file_name}'
-				image = epub.EpubImage()
-				image.file_name = f'Images/{file_name}'
-				image.content = open(file_dir, 'rb').read()
-				book.add_item(image)
 		except Exception as e:
 			echo.cerr(f'Error: {repr(e)}')
 			traceback.print_exc()
 			echo.cexit('PROCESSING IMAGES FAILED')
 		
-		return soup, first_name, first_dir
+		return soup, first_image
 
 
 	def write_epub(self, path: str):
@@ -137,15 +143,14 @@ class LightNovel():
 			echo.cexit('CREATING EPUB BOOK FAILED')
 		
 		if type(self.contents) == str:
-			soup, first_name, first_dir = self.process_image_content(self.contents, book)
+			soup, first_image = self.process_image_content(self.contents, book)
 		elif type(self.contents) == list:
 			_contents = []
-			first_name = first_dir = None
+			first_image = None
 			for content in self.contents:
-				soup, _first_name, _first_dir = self.process_image_content(content['content'], book)
-				if first_name is None or first_dir is None:
-					first_name = _first_name
-					first_dir = _first_dir
+				soup, _first_image = self.process_image_content(content['content'], book)
+				if first_image is None:
+					first_image = _first_image
 				_contents.append({
 					'content': str(soup),
 					'title': content['title'],
@@ -163,8 +168,8 @@ class LightNovel():
 					book.set_cover(cover_name, open(cover_dir, 'rb').read())
 				elif os.path.exists(self.cover_link):
 					book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
-			elif first_dir is not None:
-				book.set_cover(first_name, open(first_dir, 'rb').read())
+			elif first_image is not None:
+				book.set_cover('cover', first_image)
 		except Exception as e:
 			echo.cerr(f'Error: {repr(e)}')
 			traceback.print_exc()
@@ -185,13 +190,16 @@ class LightNovel():
 
 				# configure book
 				book.toc = (about_content, main_content)
-				book.spine = [about_content, main_content]
+				# add default NCX and Nav file
+				book.add_item(epub.EpubNcx())
+				book.add_item(epub.EpubNav())
+				book.spine = ['nav', about_content, main_content]
 			elif type(self.contents) == list:
 				about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=about_text)
 				i = 0
-				epub_nav = ['nav']
-				epub_toc = []
-				epub_contents = []
+				epub_nav = ['nav', about_content]
+				epub_toc = [about_content]
+				epub_contents = [about_content]
 				for content in _contents:
 					i += 1
 					item = (epub.EpubHtml(title=content['title'], file_name=f'Text/Section{i}.xhtml', lang='zh-CN', content=content['content']))
@@ -199,6 +207,7 @@ class LightNovel():
 					epub_nav.append(item)
 					epub_contents.append(item)
 				
+				book.add_item(about_content)
 				for epub_content in epub_contents:
 					book.add_item(epub_content)
 
