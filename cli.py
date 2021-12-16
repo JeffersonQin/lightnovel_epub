@@ -19,7 +19,7 @@ DUMP_PATH = './dump'
 echo.init_subroutine()
 
 
-def download_webpage(url):
+def _download_webpage(url):
 	'''
 	Download webpage from url.
 	:param url: url to download
@@ -47,7 +47,25 @@ def download_webpage(url):
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
 		traceback.print_exc()
-		echo.cexit('DOWNLOAD FAILED')
+		return -1
+
+
+def download_webpage(url, trial=5):
+	'''
+	Download webpage from url.
+	:param url: url to download
+	:param trial: number of trials
+	'''
+	fail_count = 0
+	while True:
+		ret = _download_webpage(url)
+		if ret != -1:
+			return ret
+		if fail_count < trial:
+			fail_count += 1
+			echo.cerr(f'Download failed, Trial {fail_count}/{trial}')
+		else:
+			echo.cexit('Download failed. Exceeded trial limit.')
 
 
 def process_series_page(url):

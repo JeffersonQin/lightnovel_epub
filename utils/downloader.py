@@ -7,24 +7,11 @@ import traceback
 
 from utils import echo
 
-def download_file(url, dir, headers=
-	{
-		'accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-		'accept-encoding': 'gzip, deflate, br',
-		'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
-		'cache-control': 'no-cache',
-		'pragma': 'no-cache',
-		'referer': 'https://www.lightnovel.us/',
-		'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Microsoft Edge";v="92"',
-		'sec-ch-ua-mobile': '?0',
-		'sec-fetch-dest': 'image',
-		'sec-fetch-mode': 'no-cors',
-		'sec-fetch-site': 'same-site',
-		'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.84',
-	}):
+def _download_file(url, dir, headers):
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
 	echo.clog(f'start downloading: {url} => {dir}')
+	ret = 0
 	try:
 		# start and block request
 		r = requests.get(url, stream=True, headers=headers)
@@ -44,9 +31,37 @@ def download_file(url, dir, headers=
 	except Exception as err:
 		echo.cerr(f'Error: {repr(err)}')
 		traceback.print_exc()
-		echo.cexit('DOWNLOAD FILE FAILED')
+		ret = 1
 	finally:
 		echo.pop_subroutine()
+		return ret
+
+
+def download_file(url, dir, headers=
+	{
+		'accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+		'accept-encoding': 'gzip, deflate, br',
+		'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+		'cache-control': 'no-cache',
+		'pragma': 'no-cache',
+		'referer': 'https://www.lightnovel.us/',
+		'sec-ch-ua': '"Chromium";v="92", " Not A;Brand";v="99", "Microsoft Edge";v="92"',
+		'sec-ch-ua-mobile': '?0',
+		'sec-fetch-dest': 'image',
+		'sec-fetch-mode': 'no-cors',
+		'sec-fetch-site': 'same-site',
+		'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.84',
+	}, trial=5):
+	fail_count = 0
+	while True:
+		ret = _download_file(url, dir, headers)
+		if ret == 0:
+			return
+		if fail_count < trial:
+			fail_count += 1
+			echo.cerr(f'Download failed, Trial {fail_count}/{trial}')
+		else:
+			echo.cexit('Download failed. Exceeded trial limit.')
 
 
 def size_description(size):
