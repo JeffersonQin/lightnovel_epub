@@ -16,6 +16,7 @@
 * uiautomator2
 * dominate
 * opencc
+* opencv
 * js2py
 
 # `cli.py`
