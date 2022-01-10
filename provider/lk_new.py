@@ -173,7 +173,7 @@ def download_images(content, dump_path):
 		echo.pop_subroutine()
 
 
-def process_article_page(url, dump_path, cvt=None):
+def process_article_page(url, dump_path):
 	'''
 	Process the article page.
 	:param url: url to process
@@ -234,7 +234,7 @@ def get_contents(url, dump_path):
 				echo.clog(f'Article ID: {aid}')
 				a_url = f'https://www.lightnovel.us/cn/detail/{aid}/'
 				a_dump_path = os.path.join(dump_path, f'{aid}.html')
-				a_content = process_article_page(a_url, a_dump_path, cvt)
+				a_content = process_article_page(a_url, a_dump_path)
 				contents.append({
 					'title': a_title,
 					'content': a_content
