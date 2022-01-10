@@ -68,7 +68,7 @@ def download(dump_path,
 
 		if url.startswith('https://www.lightnovel.us/'):
 			contents = lk_new.get_contents(url, dump_path)
-			cover_link = lk_new.get_cover(cover_link, dump_path) if conver_link.startswith('http') else cover_link
+			cover_link = lk_new.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		else:
 			echo.cexit('unsupported url')
 
