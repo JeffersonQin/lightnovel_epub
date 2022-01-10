@@ -38,7 +38,8 @@ class LightNovel():
 
 	contents = ''
 	'''
-	HTML content
+	can be either str or list
+	the format of list is [{'conent': content, 'title': title}]
 	'''
 
 	cover_link = None
