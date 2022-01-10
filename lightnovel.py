@@ -1,8 +1,6 @@
 import os
 import sys
-import requests
 import traceback
-import tempfile
 import base64
 from bs4 import BeautifulSoup
 from ebooklib import epub
@@ -162,12 +160,7 @@ class LightNovel():
 		# set cover
 		try:
 			if is_not_null(self.cover_link):
-				if str(self.cover_link).startswith('http'):
-					cover_name = self.cover_link.split('?')[0].split('/')[-1]
-					cover_dir = os.path.join(tempfile.gettempdir(), cover_name)
-					downloader.download_file(self.cover_link, cover_dir)
-					book.set_cover(cover_name, open(cover_dir, 'rb').read())
-				elif os.path.exists(self.cover_link):
+				if os.path.exists(self.cover_link):
 					book.set_cover(os.path.basename(self.cover_link), open(self.cover_link, 'rb').read())
 			elif first_image is not None:
 				book.set_cover('cover', first_image)
