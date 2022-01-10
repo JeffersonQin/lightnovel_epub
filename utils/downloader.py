@@ -50,6 +50,43 @@ def download_file(url, dir, headers, trial=5):
 			echo.cexit('Download failed. Exceeded trial limit.')
 
 
+def _download_webpage(url, headers):
+	'''
+	Download webpage from url.
+	:param url: url to download
+	'''
+	echo.push_subroutine(sys._getframe().f_code.co_name)
+
+	echo.clog(f'start downloading: {url} => memory')
+	# download
+	try:
+		return requests.get(url=url, headers=headers).text
+	except Exception as e:
+		echo.cerr(f'error: {repr(e)}')
+		traceback.print_exc()
+		return -1
+	finally:
+		echo.pop_subroutine()
+
+
+def download_webpage(url, headers, trial=5):
+	'''
+	Download webpage from url.
+	:param url: url to download
+	:param trial: number of trials
+	'''
+	fail_count = 0
+	while True:
+		ret = _download_webpage(url, headers)
+		if ret != -1:
+			return ret
+		if fail_count < trial:
+			fail_count += 1
+			echo.cerr(f'Download failed, Trial {fail_count}/{trial}')
+		else:
+			echo.cexit('Download failed. Exceeded trial limit.')
+
+
 def size_description(size):
 	'''
 	Taken and modified from https://blog.csdn.net/wskzgz/article/details/99293181
