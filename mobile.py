@@ -624,7 +624,7 @@ def dump(top_area_height,
 			identifier = input('(optional) Input identifier of light novel: ')
 		if cover_link is None:
 			cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
-		novel = LightNovel(url='', authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
+		novel = LightNovel(source='LK 客户端', authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
 		novel.contents = html_content
 
 		if cvt in ["s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t"]:

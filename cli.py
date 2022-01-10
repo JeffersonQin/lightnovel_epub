@@ -276,7 +276,7 @@ def download(dump_path,
 			identifier = input('(optional) Input identifier of light novel: ')
 		if cover_link is None:
 			cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
-		novel = LightNovel(url=url, authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
+		novel = LightNovel(source=url, authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
 		novel.contents = contents
 		novel.write_epub(path)
 	except Exception as e:
