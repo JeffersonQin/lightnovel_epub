@@ -16,9 +16,9 @@ class LightNovel():
 	object of light novel
 	'''
 	
-	url = ''
+	source = ''
 	'''
-	url of web page
+	source of light novel
 	'''
 
 	authors = []
@@ -48,11 +48,11 @@ class LightNovel():
 	if it is not beginned with `http`, it would be recognized as file path.
 	'''
 
-	def __init__(self, url: str, authors=None, identifier=None, title=None, cover_link=None):
+	def __init__(self, source: str, authors=None, identifier=None, title=None, cover_link=None):
 		'''
 		initialize light novel object
 		'''
-		self.url = url
+		self.source = source
 		if authors is not None: self.authors = authors
 		if identifier is not None: self.identifier = identifier
 		if title is not None: self.title = title
@@ -177,10 +177,7 @@ class LightNovel():
 		
 		try:
 			# set content
-			if is_not_null(self.url):
-				about_text = f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据<a href="{self.url}">{self.url}</a>生成</p>'
-			else:
-				about_text = f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据LK客户端内容生成</p>'
+			about_text = f'<p>本书由<a href="https://github.com/JeffersonQin/lightnovel_epub">JeffersonQin/lightnovel_epub</a>工具自动生成。<br>仅供学习交流使用，禁作商业用途。</p><br><p>本书根据 {self.source} 生成</p>'
 			if type(self.contents) == str:
 				about_content = epub.EpubHtml(title='关于本电子书', file_name='Text/about.xhtml', lang='zh-CN', content=about_text)
 				main_content = epub.EpubHtml(title=self.title, file_name='Text/lightnovel.xhtml', lang='zh-CN', content=str(soup))
