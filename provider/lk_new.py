@@ -26,7 +26,7 @@ DOCUMENT_DOWNLOAD_HEADERS = {
 	'upgrade-insecure-requests': '1',
 	'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.84'
 }
-IMAGE_DOWNLOAD_HEADER = {
+IMAGE_DOWNLOAD_HEADERS = {
 	'accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
 	'accept-encoding': 'gzip, deflate, br',
 	'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
@@ -123,7 +123,7 @@ def download_images(content, dump_path):
 				file_name = link.split('?')[0].split('/')[-1]
 				file_dir = os.path.join(DUMP_PATH, file_name)
 				# download
-				downloader.download_file(link, file_dir, IMAGE_DOWNLOAD_HEADER)
+				downloader.download_file(link, file_dir, IMAGE_DOWNLOAD_HEADERS)
 				# replace src
 				tag.attrs['src'] = os.path.abspath(file_dir)
 				# update html
@@ -227,7 +227,7 @@ def get_cover(cover_link, dump_path):
 	try:
 		cover_name = self.cover_link.split('?')[0].split('/')[-1]
 		cover_dir = os.path.join(dump_path, cover_name)
-		downloader.download_file(self.cover_link, cover_dir, IMAGE_DOWNLOAD_HEADER)
+		downloader.download_file(self.cover_link, cover_dir, IMAGE_DOWNLOAD_HEADERS)
 		return cover_dir
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
