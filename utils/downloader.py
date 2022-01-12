@@ -50,7 +50,7 @@ def download_file(url, dir, headers, trial=5):
 			echo.cexit('Download failed. Exceeded trial limit.')
 
 
-def _download_webpage(url, headers):
+def _download_webpage(url, headers, encoding):
 	'''
 	Download webpage from url.
 	:param url: url to download
@@ -60,7 +60,7 @@ def _download_webpage(url, headers):
 	echo.clog(f'start downloading: {url} => memory')
 	# download
 	try:
-		return requests.get(url=url, headers=headers).text
+		return requests.get(url=url, headers=headers).content.decode(encoding)
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
 		traceback.print_exc()
@@ -69,7 +69,7 @@ def _download_webpage(url, headers):
 		echo.pop_subroutine()
 
 
-def download_webpage(url, headers, trial=5):
+def download_webpage(url, headers, encoding='utf-8', trial=5):
 	'''
 	Download webpage from url.
 	:param url: url to download
@@ -77,7 +77,7 @@ def download_webpage(url, headers, trial=5):
 	'''
 	fail_count = 0
 	while True:
-		ret = _download_webpage(url, headers)
+		ret = _download_webpage(url, headers, encoding)
 		if ret != -1:
 			return ret
 		if fail_count < trial:
