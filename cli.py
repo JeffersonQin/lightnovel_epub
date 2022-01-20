@@ -8,6 +8,7 @@ from lightnovel import LightNovel
 from utils import downloader
 from utils import echo
 from provider import lk_new
+from provider import wenku8
 
 
 echo.init_subroutine()
@@ -55,6 +56,7 @@ def download(dump_path,
 		if cvt in ["s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t"]:
 			converter = opencc.OpenCC(f'{cvt}.json')
 			return converter.convert(content)
+		return content
 
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
@@ -69,6 +71,8 @@ def download(dump_path,
 		if url.startswith('https://www.lightnovel.us/'):
 			contents = lk_new.get_contents(url, dump_path)
 			cover_link = lk_new.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
+		elif url.startswith('https://www.wenku8.net/'):
+			contents = wenku8.get_contents(url, dump_path)
 		else:
 			echo.cexit('unsupported url')
 
