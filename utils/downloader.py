@@ -1,5 +1,6 @@
 import sys
 import requests
+import os
 import unicodedata
 import re
 import click
@@ -14,20 +15,23 @@ def _download_file(url, dir, headers):
 	ret = 0
 	try:
 		# start and block request
-		r = requests.get(url, stream=True, headers=headers)
+		r = requests.get(url, stream=True, headers=headers, timeout=3000)
 		# obtain content length
 		length = int(r.headers['content-length'])
 		echo.clog(f'file size: {size_description(length)}')
-		# start writing
-		f = open(dir, 'wb+')
-		# show in progressbar
-		with click.progressbar(label="Downloading from remote: ", length=length) as bar:
-			for chunk in r.iter_content(chunk_size = 512):
-				if chunk:
-					f.write(chunk)
-					bar.update(len(chunk))
-		echo.csuccess('Download Complete.')
-		f.close()
+		if os.path.exists(dir) and os.path.getsize(dir) == length:
+			echo.clog(f'file already exists {dir}')
+		else:
+			# start writing
+			f = open(dir, 'wb+')
+			# show in progressbar
+			with click.progressbar(label="Downloading from remote: ", length=length) as bar:
+				for chunk in r.iter_content(chunk_size = 512):
+					if chunk:
+						f.write(chunk)
+						bar.update(len(chunk))
+			echo.csuccess('Download Complete.')
+			f.close()
 	except Exception as err:
 		echo.cerr(f'Error: {repr(err)}')
 		traceback.print_exc()
