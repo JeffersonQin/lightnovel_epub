@@ -198,7 +198,6 @@ class LightNovel():
 					epub_nav.append(item)
 					epub_contents.append(item)
 				
-				book.add_item(about_content)
 				for epub_content in epub_contents:
 					book.add_item(epub_content)
 
