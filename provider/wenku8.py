@@ -217,7 +217,7 @@ def get_contents(url, dump_path):
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
 	try:
-		assert('novel' in url and 'index.htm' in url, 'not wenku8 novel toc page')
+		assert ('novel' in url) and ('index.htm' in url), 'not wenku8 novel toc page'
 		relative = url.replace('index.htm', '')
 		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 		structure = getBookStructure(content)
