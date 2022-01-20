@@ -1,10 +1,19 @@
 # lightnovel_epub
 
-本工具用于基于[轻之国度](https://lightnovel.us)网页或 app 生成`epub`小说。
+~~本工具用于基于[轻之国度](https://lightnovel.us)网页或 app 生成`epub`小说。~~
+
+Update [2022/01/20]: **现已升级成为轻小说 epub 生成框架，支持更多网站**~~（当年名字取得好啊！）~~
 
 **注意：本工具仅作学习交流使用，作者不对内容和使用情况付任何责任！**
 
 ~~本来就是一个面向过程的小工具，怎么越发繁琐起来了。。。这里还要感慨一下LK牛逼的防御技术~~
+
+# 支持站点
+
+| 站点 | 单网页 | 合集  | 移动端 |
+| :--: | :---: | :---: | :---: |
+| [轻之国度](https://www.lightnovel.us) | ✅ | ✅ | ✅ |
+| [轻小说文库](https://www.wenku8.net/index.php) | ❌ | ✅ | ❔ |
 
 # Requirements
 
@@ -58,29 +67,8 @@ EPUB 内部目录：
     └── ...
 ```
 
-此外，对于合集文章，解析的过程比较有趣，这里讨论一下。
-
-首先是对 HTML 的分析。
-
-![](./assets/series-inspector.png)
-
-很遗憾，并不是 `<a>` 也没有 `href`。去 `Source` 里一看，貌似框架选的是 `Vue`，不熟悉前端，不多做评价。
-
-接着查看 `event`，发现是混淆过的 `js`，放弃逆向。
-
-![](./assets/series-event.png)
-
-经观察，数据应该在文档最后的某个 `<script>` 标签内：
-
-![](./assets/series-script.png)
-
-经过分析，这个 `<script>` 只暴露了一个接口：
-
-```js
-window.__NUXT__ = (function(...) { ... }) (...)
-```
-
-故我们只需要 evaluate 这个脚本，然后获取 `window.__NUXT__` 的值即可。
+TODO: 
+- [ ] 日后可能会支持多重嵌套
 
 ## 使用方法
 
@@ -122,17 +110,25 @@ Options:
   --help             Show this message and exit.
 ```
 
-注意：命令的 `options` 可以直接忽略，因为执行命令后如果发现没有 `options` 会进行第二轮询问。
+注意：
+* 命令的 `options` 可以直接忽略，因为执行命令后如果发现没有 `options` 会进行第二轮询问。
+* `dump-path` 是指缓存以及其他的临时文件的输出位置，若提示找不到路径，创建即可
+* `html-dump` 可以指定使用使用某个已经部分处理过的 `html` 作为信息源继续处理，**一般适用于单文章页面**
 
 ## Known Issues
 
-* 对于部分 **先显示无权限观看**，**后可以观看** 的文章无效，以后可能会写浏览器模式
+* 轻之国度
+  * 对于部分 **先显示无权限观看**，**后可以观看** 的文章无效，以后可能会写浏览器模式
 
 # `mobile.py`
 
 ## 使用场景
 
-针对 **仅APP** 文章。
+针对轻之国度 **仅APP** 文章。
+
+## TODO
+
+- [ ] 以后将会将此部分并入主框架
 
 ## 原理
 
@@ -254,7 +250,7 @@ Options:
 # TODO
 
 - [x] 图片下载至临时路径
-- [ ] 用 PyQt 写 GUI
+- [ ] 用 PyQt 写 GUI ~~(基本上是不可能了，完全不想写，而且也没有意义)~~
 - [x] 为漫画提供更好的支持
 - [ ] 增加更多 `metadata` : `tags`, `publisher`, ...
 - [ ] 自动抓取标题
@@ -263,7 +259,45 @@ Options:
 - [x] 简繁自动转换
 - [x] 模拟轻国手机版
 - [ ] 增加移动端截屏图片压缩选项
+- [ ] 目录多重嵌套
 
 相关帖子：
 * https://www.v2ex.com/t/800508
 * https://www.lightnovel.us/cn/themereply/1088005
+
+# 参与贡献
+
+1. 在 `provider` 文件夹中新建文件，最主要实现两个方法：
+   * `get_contents(url, dump_path)` 用来获取信息。返回值可以是 `str` 或 `list`。`list` 内的数据均为 `{'title': title, 'content': content}`
+   * `get_cover(link, dump_path)` 用来获取封面。之所以有这个是因为某些站有特殊的 http header，我不说是谁
+2. 在 `cli.py` 内接入即可
+
+# 技术分析
+
+~~以前写好了舍不得删掉所以再开一个板块，下面基本都是废话~~
+
+## LK 合集文章
+
+对于合集文章，解析的过程比较有趣，这里讨论一下。
+
+首先是对 HTML 的分析。
+
+![](./assets/series-inspector.png)
+
+很遗憾，并不是 `<a>` 也没有 `href`。去 `Source` 里一看，貌似框架选的是 `Vue`，不熟悉前端，不多做评价。
+
+接着查看 `event`，发现是混淆过的 `js`，放弃逆向。
+
+![](./assets/series-event.png)
+
+经观察，数据应该在文档最后的某个 `<script>` 标签内：
+
+![](./assets/series-script.png)
+
+经过分析，这个 `<script>` 只暴露了一个接口：
+
+```js
+window.__NUXT__ = (function(...) { ... }) (...)
+```
+
+故我们只需要 evaluate 这个脚本，然后获取 `window.__NUXT__` 的值即可。
