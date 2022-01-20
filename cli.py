@@ -56,6 +56,7 @@ def download(dump_path,
 		if cvt in ["s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t"]:
 			converter = opencc.OpenCC(f'{cvt}.json')
 			return converter.convert(content)
+		return content
 
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
