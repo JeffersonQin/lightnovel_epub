@@ -245,7 +245,7 @@ def get_contents(url, dump_path):
 					f.write(chContent.content)
 				# to call download images
 				img_content = process_article_page(None, a_dump_path)
-				contents.append({'title': a_title, 'content': chContent.content})
+				contents.append({'title': a_title, 'content': img_content})
 
 		return contents
 	except Exception as e:
