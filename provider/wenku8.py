@@ -1,10 +1,9 @@
+from genericpath import exists
 import time
 import sys
 import traceback
 import os
-import requests
 import re
-import js2py
 from bs4 import BeautifulSoup
 
 from utils import downloader
@@ -56,6 +55,9 @@ IMAGE_DOWNLOAD_HEADERS = {
     'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36',
 }
 
+DECODE = 'gbk'
+ENCODE = 'utf-8'
+
 class BookInfo:
 	def __init__(self, aid, cid, title, content=None, href=None) -> None:
 		self.aid: str = aid
@@ -72,7 +74,7 @@ def obtain_article_content(url):
 	'''
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
-	res = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS)
+	res = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 	# parse
 	try:
 		soup = BeautifulSoup(res, 'lxml')
@@ -121,7 +123,7 @@ def download_images(content, dump_path):
 				# replace src
 				tag.attrs['src'] = os.path.abspath(file_dir)
 				# update html
-				with open(dump_path, 'w', encoding='utf-8') as f:
+				with open(dump_path, 'w', encoding=ENCODE) as f:
 					f.write(str(soup))
 		return str(soup)
 	except Exception as e:
@@ -145,14 +147,14 @@ def process_article_page(url, dump_path, cvt=None):
         # obtain html
         if dump_path is not None:
             if os.path.exists(dump_path):
-                with open(dump_path, 'r', encoding='utf-8') as f:
+                with open(dump_path, 'r', encoding=ENCODE) as f:
                     content = f.read()
                 flag = False
         if flag:
             content = obtain_article_content(url)
             if dump_path is None:
                 dump_path = os.path.join(DUMP_PATH, f'./{time.time_ns()}.html')
-            with open(dump_path, 'w', encoding='utf-8') as f:
+            with open(dump_path, 'w', encoding=ENCODE) as f:
                 f.write(content)
             echo.clog(f'Dumped HTML to {dump_path}')
         # download images
@@ -199,7 +201,7 @@ def getContent(content: str) -> BookInfo:
 	cid = re.search(r'var chapter_id = "(\S+)"', content)[1]
 	soup = BeautifulSoup(content, 'lxml')
 	title = soup.find('div', id='title').text
-	content = soup.find('div', id='contentmain').text
+	content = soup.find('div', id='contentmain').prettify()
 	return BookInfo(aid, cid, title, content)
 
 
@@ -215,37 +217,35 @@ def get_contents(url, dump_path):
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 
 	try:
-		if 'novel' and 'index.htm' in url:
-			relative = url.replace('index.htm', '')
-			content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS)
-			structure = getBookStructure(content)
+		assert('novel' and 'index.htm' in url, 'not wenku8 novel toc page')
+		relative = url.replace('index.htm', '')
+		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
+		structure = getBookStructure(content)
 
-			# series
-			contents = []
-			i = 0
-			for book in structure.keys():
-				echo.clog(f'Processing book {book}')
-				for chapter in structure[book]:
-					addr = relative + '/' + chapter.href
-					chWeb = downloader.download_webpage(addr, DOCUMENT_DOWNLOAD_HEADERS)
-					chContent = getContent(chWeb)
-					i += 1
-					echo.clog(
-						f'Processing chapter {i} / {len(structure[book])}')
-					a_title = chContent.title
-					aid = chContent.cid
-					echo.clog(f'Title: {a_title}')
-					echo.clog(f'Article ID: {aid}')
-					a_dump_path = os.path.join(dump_path, f'{aid}.html')
-					with open(a_dump_path, 'w', encoding='utf-8') as f:
-						echo.clog(f'Save content to {a_dump_path}')
-						f.write(chContent.content)
-					# to call download images
-					a_content = process_article_page(None, a_dump_path)
-					contents.append({'title': a_title, 'content': a_content})
-		else:
-			# article
-			contents = process_article_page(url, html_dump)
+		# series
+		contents = []
+		book_index = 0
+		for book in structure.keys():
+			echo.clog(f'Processing book {book} {book_index} / {len(structure.keys())}')
+			book_index += 1
+			ch_index = 0
+			for chapter in structure[book]:
+				addr = relative + '/' + chapter.href
+				chWeb = downloader.download_webpage(addr, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
+				chContent = getContent(chWeb)
+				ch_index += 1
+				echo.clog(f'Processing chapter {ch_index} / {len(structure[book])}')
+				a_title = chContent.title
+				aid = chContent.cid
+				echo.clog(f'Title: {a_title}')
+				echo.clog(f'Article ID: {aid}')
+				a_dump_path = os.path.join(dump_path, f'{aid}.html')
+				with open(a_dump_path, 'w', encoding=ENCODE) as f:
+					echo.clog(f'Save content to {a_dump_path}')
+					f.write(chContent.content)
+				# to call download images
+				img_content = process_article_page(None, a_dump_path)
+				contents.append({'title': a_title, 'content': chContent.content})
 
 		return contents
 	except Exception as e:
