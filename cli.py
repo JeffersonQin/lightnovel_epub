@@ -72,7 +72,8 @@ def download(dump_path,
 			contents = lk_new.get_contents(url, dump_path)
 			cover_link = lk_new.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		elif url.startswith('https://www.wenku8.net/'):
-			contents = wenku8.get_contents(url, dump_path)
+			lightNovel = wenku8.get_contents(url, dump_path)
+			contents, title, authors, identifier = lightNovel.contents, lightNovel.title, lightNovel.authors, lightNovel.identifier
 		else:
 			echo.cexit('unsupported url')
 

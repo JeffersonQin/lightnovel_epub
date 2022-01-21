@@ -1,10 +1,13 @@
 from __future__ import annotations
+import struct
 import time
 import sys
 import traceback
 import os
 import re
 from bs4 import BeautifulSoup
+from soupsieve import select
+from lightnovel import LightNovel
 
 from utils import downloader
 from utils import echo
@@ -168,10 +171,28 @@ def process_article_page(url, dump_path, cvt=None):
     finally:
         echo.pop_subroutine()
 
-def getBookStructure(content: str) -> dict[str, list[BookInfo]]:
+class BookStructure:
+	def __init__(self, title: str = None, author: str = None, id: str = None) -> None:
+		self.title: str = title
+		self.author: str = author
+		self.id: str = id
+		self.books: dict[str, list[BookInfo]] = {}
+		self.contents = {}
+
+	def addChapter(self, book: str, chapter: BookInfo):
+		if not book in self.books:
+			self.books[book] = []
+		self.books[book].append(chapter)
+
+def getBookStructure(source: str, content: str) -> LightNovel:
 	soup = BeautifulSoup(content, 'lxml')
+	title = soup.find(id='title').text
+	author = soup.find(id='info').text.replace('作者：', '')
 	table = soup.find('table')
 	units = table.find_all('td')
+	bookId = re.search(r'var article_id = "(\S+)"', content)[1]
+	lightNovel = LightNovel(source, author, bookId, title)
+	lightNovel.contents = []
 	books = {}
 	curBook = None
 	for unit in units:
@@ -193,7 +214,8 @@ def getBookStructure(content: str) -> dict[str, list[BookInfo]]:
 			if curBook not in books:
 				echo.cexit(f'No current book specified: {curChapter}')
 			books[curBook].append(curChapter)
-	return books
+	lightNovel.books = books
+	return lightNovel
 
 
 def getContent(content: str) -> BookInfo:
@@ -205,11 +227,12 @@ def getContent(content: str) -> BookInfo:
 	return BookInfo(aid, cid, title, content)
 
 
-def get_contents(url, dump_path):
+def get_contents(url, dump_path) -> LightNovel:
 	'''
 		Get contents from url.
 		:param url: url to process
 		:param dump_path: path to dump things
+		:returns: title, author, contents
 		'''
 	global DUMP_PATH
 	DUMP_PATH = dump_path
@@ -220,21 +243,21 @@ def get_contents(url, dump_path):
 		assert ('novel' in url) and ('index.htm' in url), 'not wenku8 novel toc page'
 		relative = url.replace('index.htm', '')
 		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
-		structure = getBookStructure(content)
+		structure = getBookStructure(url, content)
 
 		# series
 		contents = []
 		book_index = 0
-		for book in structure.keys():
-			echo.clog(f'Processing book {book} {book_index} / {len(structure.keys())}')
+		for book in structure.books.keys():
+			echo.clog(f'Processing book {book} {book_index} / {len(structure.books.keys())}')
 			book_index += 1
 			ch_index = 0
-			for chapter in structure[book]:
+			for chapter in structure.books[book]:
 				addr = relative + '/' + chapter.href
 				chWeb = downloader.download_webpage(addr, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 				chContent = getContent(chWeb)
 				ch_index += 1
-				echo.clog(f'Processing chapter {ch_index} / {len(structure[book])}')
+				echo.clog(f'Processing chapter {ch_index} / {len(structure.books[book])}')
 				a_title = chContent.title
 				aid = chContent.cid
 				echo.clog(f'Title: {a_title}')
@@ -245,9 +268,9 @@ def get_contents(url, dump_path):
 					f.write(chContent.content)
 				# to call download images
 				img_content = process_article_page(None, a_dump_path)
-				contents.append({'title': a_title, 'content': img_content})
+				structure.contents.append({'title': a_title, 'content': img_content})
 
-		return contents
+		return structure
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
 		traceback.print_exc()
