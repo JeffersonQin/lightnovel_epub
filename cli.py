@@ -20,36 +20,38 @@ def cli():
 
 
 @cli.command()
-@click.option('--dump-path', type=click.Path(exists=True), default='./dump', help='directory for dumping')
-@click.option('--html-dump', type=click.Path(exists=True), default=None, help='html content dump file path')
-@click.option('--title', default=None, help='title of light novel')
-@click.option('--authors', default=None, help='authors\' names, separated by comma (,)')
-@click.option('--identifier', default=None, help='identifier of light novel')
-@click.option('--cover-link', default=None, help='cover_link of light novel. cover_link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.')
-@click.option('--cvt', default=None, help='OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC')
-@click.option('--path', type=click.Path(exists=True), default='./', help='directory for saving the light novel')
+@click.option('--dump-path', type=click.Path(exists=True), default='./dump', 
+				help='directory for dumping files and caches')
+@click.option('--title', default=None, 
+				help='title of light novel')
+@click.option('--authors', default=None, 
+				help='authors\' names, separated by comma (,)')
+@click.option('--identifier', default=None, 
+				help='identifier of light novel')
+@click.option('--cover-link', default=None, 
+				help='cover link of light novel. cover link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.')
+@click.option('--cvt', default=None, 
+				help='OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC')
+@click.option('--path', type=click.Path(exists=True), default='./', 
+				help='directory for saving the light novel')
+@click.option('--lk-html-dump', type=click.Path(exists=True), default=None, 
+				help='(lightnovel.us) html content dump file path')
 @click.argument('url')
 def download(dump_path, 
-			html_dump, 
 			title: str, 
 			authors: str, 
 			identifier: str, 
 			cover_link: str, 
 			cvt: str, 
 			path: str, 
+			lk_html_dump, 
 			url: str):
 	'''
 	download the light novel
-	:param dump_path: directory for dumping
-	:param html_dump: html content dump file path
-	:param title: title of light novel
-	:param authors: authors' names, separated by comma (,)
-	:param identifier: identifier of light novel
-	:param cover_link: cover_link of light novel. cover_link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.
-	:param cvt: OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC
-	:param path: directory for saving the light novel
-	:param url: url of light novel
-	:return: None
+
+	ARGUMENTS:
+
+	* URL: url of light novel to download
 	'''
 	def convert_str(content, cvt):
 		# chinese conversion
@@ -69,10 +71,11 @@ def download(dump_path,
 			cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
 
 		if url.startswith('https://www.lightnovel.us/'):
-			contents = lk_new.get_contents(url, dump_path)
+			contents = lk_new.get_contents(url, dump_path, lk_html_dump)
 			cover_link = lk_new.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		elif url.startswith('https://www.wenku8.net/'):
 			contents = wenku8.get_contents(url, dump_path)
+			cover_link = wenku8.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		else:
 			echo.cexit('unsupported url')
 

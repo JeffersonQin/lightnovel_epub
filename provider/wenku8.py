@@ -254,3 +254,23 @@ def get_contents(url, dump_path):
 		echo.cexit('GET CONTENTS FAILED')
 	finally:
 		echo.pop_subroutine()
+
+
+def get_cover(cover_link, dump_path):
+	'''
+	Get cover from link.
+	:param cover_link: link to cover
+	:param dump_path: path to dump cover
+	'''
+	echo.push_subroutine(sys._getframe().f_code.co_name)
+	try:
+		cover_name = self.cover_link.split('?')[0].split('/')[-1]
+		cover_dir = os.path.join(dump_path, cover_name)
+		downloader.download_file(self.cover_link, cover_dir, IMAGE_DOWNLOAD_HEADERS)
+		return cover_dir
+	except Exception as e:
+		echo.cerr(f'error: {repr(e)}')
+		traceback.print_exc()
+		echo.cexit('GET COVER FAILED')
+	finally:
+		echo.pop_subroutine()
