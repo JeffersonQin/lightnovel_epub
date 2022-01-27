@@ -244,31 +244,33 @@ def get_contents(url, dump_path, volume_index) -> LightNovel:
 		relative = url.replace('index.htm', '')
 		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 		structure = getBookStructure(url, content)
+		book_titles = structure.books.keys()
+		volume_count = len(book_titles)
 
-		if volume_index > len(structure.keys()):
-			echo.cexit("ERROR: VOLUME INDEX OUT OF RANGE, TOTAL VOLUME:", len(structure.keys()))
+		if volume_index > volume_count:
+			echo.cexit("ERROR: VOLUME INDEX OUT OF RANGE, TOTAL VOLUME:", volume_count)
 
 		# series
-		contents = []
-		book_index = 0
-		for book in structure.books.keys():
-			echo.clog(f'Processing book {book} {book_index} / {len(structure.books.keys())}')
-			book_index += 1
-			echo.clog(f'Processing book {book} {book_index} / {len(structure.keys())}')
+		cur_volume_index = 1
+		for book_title in book_titles:
+			echo.clog(f'Processing volume {book_title} {cur_volume_index} / {volume_count}')
+			cur_volume_index += 1
 
-			if volume_index != -1 and volume_index != book_index: continue
+			if volume_index != -1 and volume_index != cur_volume_index: continue
 
-			ch_index = 0
-			for chapter in structure.books[book]:
+			ch_index = 1
+			for chapter in structure.books[book_title]:
 				addr = relative + '/' + chapter.href
 				chWeb = downloader.download_webpage(addr, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 				chContent = getContent(chWeb)
-				ch_index += 1
-				echo.clog(f'Processing chapter {ch_index} / {len(structure.books[book])}')
 				a_title = chContent.title
 				aid = chContent.cid
+
+				ch_index += 1
+				echo.clog(f'Processing chapter {ch_index} / {len(structure.books[book_title])}')
 				echo.clog(f'Title: {a_title}')
 				echo.clog(f'Article ID: {aid}')
+
 				a_dump_path = os.path.join(dump_path, f'{aid}.html')
 				with open(a_dump_path, 'w', encoding=ENCODE) as f:
 					echo.clog(f'Save content to {a_dump_path}')
