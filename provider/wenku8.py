@@ -226,14 +226,14 @@ def getContent(content: str) -> BookInfo:
 	content = soup.find('div', id='contentmain').prettify()
 	return BookInfo(aid, cid, title, content)
 
-
-def get_contents(url, dump_path) -> LightNovel:
+def get_contents(url, dump_path, volume_index) -> LightNovel:
 	'''
-		Get contents from url.
-		:param url: url to process
-		:param dump_path: path to dump things
-		:returns: title, author, contents
-		'''
+	Get contents from url.
+	:param url: url to process
+	:param dump_path: path to dump things
+	:param volume_index: index of volume to generate
+	:returns: LightNovel class
+	'''
 	global DUMP_PATH
 	DUMP_PATH = dump_path
 
@@ -245,12 +245,19 @@ def get_contents(url, dump_path) -> LightNovel:
 		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 		structure = getBookStructure(url, content)
 
+		if volume_index > len(structure.keys()):
+			echo.cexit("ERROR: VOLUME INDEX OUT OF RANGE, TOTAL VOLUME:", len(structure.keys()))
+
 		# series
 		contents = []
 		book_index = 0
 		for book in structure.books.keys():
 			echo.clog(f'Processing book {book} {book_index} / {len(structure.books.keys())}')
 			book_index += 1
+			echo.clog(f'Processing book {book} {book_index} / {len(structure.keys())}')
+
+			if volume_index != -1 and volume_index != book_index: continue
+
 			ch_index = 0
 			for chapter in structure.books[book]:
 				addr = relative + '/' + chapter.href
@@ -275,5 +282,25 @@ def get_contents(url, dump_path) -> LightNovel:
 		echo.cerr(f'error: {repr(e)}')
 		traceback.print_exc()
 		echo.cexit('GET CONTENTS FAILED')
+	finally:
+		echo.pop_subroutine()
+
+
+def get_cover(cover_link, dump_path):
+	'''
+	Get cover from link.
+	:param cover_link: link to cover
+	:param dump_path: path to dump cover
+	'''
+	echo.push_subroutine(sys._getframe().f_code.co_name)
+	try:
+		cover_name = self.cover_link.split('?')[0].split('/')[-1]
+		cover_dir = os.path.join(dump_path, cover_name)
+		downloader.download_file(self.cover_link, cover_dir, IMAGE_DOWNLOAD_HEADERS)
+		return cover_dir
+	except Exception as e:
+		echo.cerr(f'error: {repr(e)}')
+		traceback.print_exc()
+		echo.cexit('GET COVER FAILED')
 	finally:
 		echo.pop_subroutine()
