@@ -296,9 +296,9 @@ def get_cover(cover_link, dump_path):
 	'''
 	echo.push_subroutine(sys._getframe().f_code.co_name)
 	try:
-		cover_name = self.cover_link.split('?')[0].split('/')[-1]
+		cover_name = cover_link.split('?')[0].split('/')[-1]
 		cover_dir = os.path.join(dump_path, cover_name)
-		downloader.download_file(self.cover_link, cover_dir, IMAGE_DOWNLOAD_HEADERS)
+		downloader.download_file(cover_link, cover_dir, IMAGE_DOWNLOAD_HEADERS)
 		return cover_dir
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
