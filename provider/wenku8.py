@@ -251,10 +251,10 @@ def get_contents(url, dump_path, volume_index) -> LightNovel:
 			echo.cexit("ERROR: VOLUME INDEX OUT OF RANGE, TOTAL VOLUME:", volume_count)
 
 		# series
-		cur_volume_index = 1
+		cur_volume_index = 0
 		for book_title in book_titles:
-			echo.clog(f'Processing volume {book_title} {cur_volume_index} / {volume_count}')
 			cur_volume_index += 1
+			echo.clog(f'Processing volume {book_title} {cur_volume_index} / {volume_count}')
 
 			if volume_index != -1 and volume_index != cur_volume_index: continue
 
