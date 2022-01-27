@@ -36,6 +36,8 @@ def cli():
 				help='directory for saving the light novel')
 @click.option('--lk-html-dump', type=click.Path(exists=True), default=None, 
 				help='(lightnovel.us) html content dump file path')
+@click.option('--wenku8-volume', default=-1,
+				help='(wenku8.net) identify the index of the volume to generate. -1 means every volume, which is also the default option. index starts from 1.')
 @click.argument('url')
 def download(dump_path, 
 			title: str, 
@@ -45,6 +47,7 @@ def download(dump_path,
 			cvt: str, 
 			path: str, 
 			lk_html_dump, 
+			wenku8_volume: int, 
 			url: str):
 	'''
 	download the light novel
@@ -74,7 +77,7 @@ def download(dump_path,
 			contents = lk_new.get_contents(url, dump_path, lk_html_dump)
 			cover_link = lk_new.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		elif url.startswith('https://www.wenku8.net/'):
-			contents = wenku8.get_contents(url, dump_path)
+			contents = wenku8.get_contents(url, dump_path, wenku8_volume)
 			cover_link = wenku8.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		else:
 			echo.cexit('unsupported url')

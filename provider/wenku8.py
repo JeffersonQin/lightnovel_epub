@@ -205,12 +205,13 @@ def getContent(content: str) -> BookInfo:
 	return BookInfo(aid, cid, title, content)
 
 
-def get_contents(url, dump_path):
+def get_contents(url, dump_path, volume_index):
 	'''
-		Get contents from url.
-		:param url: url to process
-		:param dump_path: path to dump things
-		'''
+	Get contents from url.
+	:param url: url to process
+	:param dump_path: path to dump things
+	:param volume_index: index of volume to generate
+	'''
 	global DUMP_PATH
 	DUMP_PATH = dump_path
 
@@ -222,12 +223,18 @@ def get_contents(url, dump_path):
 		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 		structure = getBookStructure(content)
 
+		if len(structure.keys()) > volume_index:
+			echo.cexit("ERROR: VOLUME INDEX OUT OF RANGE, TOTAL VOLUME:", len(structure.keys()))
+
 		# series
 		contents = []
 		book_index = 0
 		for book in structure.keys():
 			echo.clog(f'Processing book {book} {book_index} / {len(structure.keys())}')
 			book_index += 1
+
+			if volume_index != -1 and volume_index != book_index: continue
+
 			ch_index = 0
 			for chapter in structure[book]:
 				addr = relative + '/' + chapter.href
