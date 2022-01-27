@@ -19,7 +19,7 @@ def _download_file(url, dir, headers):
 		# obtain content length
 		length = int(r.headers['content-length'])
 		echo.clog(f'file size: {size_description(length)}')
-		THRESHOLD = 8
+		THRESHOLD = 32
 		if os.path.exists(dir) and abs(os.path.getsize(dir) - length) < THRESHOLD:
 			echo.clog(f'file already exists {dir}')
 		else:
