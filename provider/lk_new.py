@@ -174,11 +174,12 @@ def process_article_page(url, dump_path):
 		echo.pop_subroutine()
 
 
-def get_contents(url, dump_path):
+def get_contents(url, dump_path, html_dump):
 	'''
 	Get contents from url.
 	:param url: url to process
 	:param dump_path: path to dump things
+	:param html_dump: html dump path
 	'''
 	global DUMP_PATH
 	DUMP_PATH = dump_path
