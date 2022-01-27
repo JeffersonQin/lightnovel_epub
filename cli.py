@@ -1,3 +1,4 @@
+from operator import truediv
 import click
 import sys
 import traceback
@@ -71,7 +72,7 @@ def download(dump_path,
 			os.mkdir(dump_path)
 
 		if cover_link is None:
-			cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
+			cover_link = input('(Optional) Input cover_link of light novel (see --help for further explanation): ')
 
 		if url.startswith('https://www.lightnovel.us/'):
 			contents = lk_new.get_contents(url, dump_path, lk_html_dump)
@@ -92,12 +93,31 @@ def download(dump_path,
 		else:
 			echo.cexit('CONTENTS MUST BE STRING OR LIST')
 
-		if title is None:
-			title = input('Input title of light novel: ')
-		if authors is None:
-			authors = input('(optional) Input authors\' names, separated by comma (,): ')
-		if identifier is None:
-			identifier = input('(optional) Input identifier of light novel: ')
+
+		TITLE_INPUT_HINT = 'Input title of light novel: '
+		AUTHOR_INPUT_HINT = '(Optional) Input authors\' names, separated by comma (,): '
+		IDENTIFIER_INPUT_HINT = '(Optional) Input identifier of light novel: '
+		def isempty(instr) -> bool:
+			if instr is None:
+				return True
+			if len(instr) == 0 or str.isspace(instr):
+				return True
+			return False
+		if isempty(title):
+			title = input(TITLE_INPUT_HINT)
+		else:
+			user_title = input(f'Current Title: {title}. (Optional) {TITLE_INPUT_HINT}')
+			title = title if isempty(user_title) else user_title
+		if isempty(authors):
+			authors = input(AUTHOR_INPUT_HINT)
+		else:
+			user_authors = input(f'Current Authors: {authors}. {AUTHOR_INPUT_HINT}')
+			authors = authors if isempty(user_authors) else user_authors
+		if isempty(identifier):
+			identifier = input(IDENTIFIER_INPUT_HINT)
+		else:
+			user_identifier = input(f'Current identifier: {identifier}. {IDENTIFIER_INPUT_HINT}')
+			identifier = identifier if isempty(user_identifier) else user_identifier
 
 		novel = LightNovel(source=url, authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
 		novel.contents = contents
