@@ -18,6 +18,7 @@
 - [Known Issues](#known-issues)
 - [TODO](#todo)
 - [Contribution](#contribution)
+- [LICENSE](#license)
 - [技术分析](#技术分析)
 	- [原理概览](#原理概览)
 	- [轻之国度网页版 合集文章](#轻之国度网页版-合集文章)
@@ -306,7 +307,13 @@ Options:
 1. 在 `provider` 文件夹中新建文件，最主要实现两个方法：
    * `get_contents(url, dump_path)` 用来获取信息。返回值可以是 `str` 或 `list`。`list` 内的数据均为 `{'title': title, 'content': content}`
    * `get_cover(link, dump_path)` 用来获取封面。之所以有这个是因为某些站有特殊的 http header，我不说是谁
+   * 可以额外设计一些 `options`，写明即可
 2. 在 `cli.py` 内接入即可
+
+# LICENSE
+
+* `lightnovel.py`, `cli.py` 使用 AGPL License 授权（`ebooklib` 使用该协议）
+* 项目内的其他文件使用 MIT License 进行授权 
 
 # 技术分析
 
