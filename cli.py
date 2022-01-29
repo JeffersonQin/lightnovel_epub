@@ -3,12 +3,14 @@ import sys
 import traceback
 import os
 import opencc
+import time
 
 from lightnovel import LightNovel
 from utils import downloader
 from utils import echo
 from provider import lk_new
 from provider import wenku8
+from provider import lk_mobile
 
 
 echo.init_subroutine()
@@ -20,35 +22,68 @@ def cli():
 
 
 @cli.command()
-@click.option('--dump-path', type=click.Path(exists=True), default='./dump', 
-				help='directory for dumping files and caches')
+# general options
+@click.option('--dump-path', type=click.Path(), default='./dump', 
+	help='directory for dumping files and caches')
 @click.option('--title', default=None, 
-				help='title of light novel')
+	help='title of light novel')
 @click.option('--authors', default=None, 
-				help='authors\' names, separated by comma (,)')
+	help='authors\' names, separated by comma (,)')
 @click.option('--identifier', default=None, 
-				help='identifier of light novel')
+	help='identifier of light novel')
 @click.option('--cover-link', default=None, 
-				help='cover link of light novel. cover link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.')
+	help='cover link of light novel. cover link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.')
 @click.option('--cvt', default=None, 
-				help='OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC')
+	help='OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC')
 @click.option('--path', type=click.Path(exists=True), default='./', 
-				help='directory for saving the light novel')
+	help='directory for saving the light novel')
+# lightnovel.us
 @click.option('--lk-html-dump', type=click.Path(exists=True), default=None, 
-				help='(lightnovel.us) html content dump file path')
+	help='(lightnovel.us) html content dump file path')
+# wenku8.net
 @click.option('--wenku8-volume', default=-1,
-				help='(wenku8.net) identify the index of the volume to generate. -1 means every volume, which is also the default option. index starts from 1.')
+	help='(wenku8.net) identify the index of the volume to generate. -1 means every volume, which is also the default option. index starts from 1.')
+# lk mobile
+@click.option('--lk-mobile-top-area-height', default=325, 
+	help='(lk mobile) the height of the top area')
+@click.option('--lk-mobile-bottom-area-height', default=200, 
+	help='(lk mobile) the height of the bottom area')
+@click.option('--lk-mobile-image-equal-threshold', default=1, 
+	help='(lk mobile) the threshold of judging whether two images are equal')
+@click.option('--lk-mobile-safe-area-padding', default=20, 
+	help='(lk mobile) the padding of the safe area')
+@click.option('--lk-mobile-vert-dump', type=click.Path(exists=True), default=None, 
+	help='(lk mobile) vertical content dump file path')
+@click.option('--lk-mobile-horz-dump', type=click.Path(exists=True), default=None, 
+	help='(lk mobile) horizontal content dump file path')
+@click.option('--lk-mobile-html-dump', type=click.Path(exists=True), default=None, 
+	help='(lk mobile) html content dump file path')
+@click.option('--lk-mobile-conflict-mode', type=bool, default=False, 
+	help='(lk mobile) whether to resolve conflict manually')
+@click.option('--lk-mobile-ignore-newline', type=bool, default=True, 
+	help='(lk mobile) whether to ignore newline')
+# general arguments
 @click.argument('url')
-def download(dump_path, 
-			title: str, 
-			authors: str, 
-			identifier: str, 
-			cover_link: str, 
-			cvt: str, 
-			path: str, 
-			lk_html_dump, 
-			wenku8_volume: int, 
-			url: str):
+def download(
+	dump_path, 
+	title: str, 
+	authors: str, 
+	identifier: str, 
+	cover_link: str, 
+	cvt: str, 
+	path: str, 
+	lk_html_dump, 
+	wenku8_volume: int, 
+	lk_mobile_top_area_height: int, 
+	lk_mobile_bottom_area_height: int, 
+	lk_mobile_image_equal_threshold: int, 
+	lk_mobile_safe_area_padding: int, 
+	lk_mobile_vert_dump, 
+	lk_mobile_horz_dump,
+	lk_mobile_html_dump,
+	lk_mobile_conflict_mode: bool,
+	lk_mobile_ignore_newline: bool, 
+	url: str):
 	'''
 	download the light novel
 
@@ -79,6 +114,10 @@ def download(dump_path,
 		elif url.startswith('https://www.wenku8.net/'):
 			contents = wenku8.get_contents(url, dump_path, wenku8_volume)
 			cover_link = wenku8.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
+		elif url == 'lk-mobile':
+			contents = lk_mobile.get_contents(lk_mobile_top_area_height, lk_mobile_bottom_area_height, lk_mobile_image_equal_threshold, lk_mobile_safe_area_padding, dump_path, lk_mobile_vert_dump, lk_mobile_horz_dump, lk_mobile_html_dump, lk_mobile_conflict_mode, lk_mobile_ignore_newline)
+			cover_link = lk_mobile.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
+			url = '轻之国度 APP'
 		else:
 			echo.cexit('unsupported url')
 
