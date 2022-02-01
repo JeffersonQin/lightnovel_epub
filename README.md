@@ -150,6 +150,8 @@ Options:
 
 ## 轻之国度 App
 
+由于没有 URL，所以在这种情况下 url 参数应指定为 `lk-mobile`，并打开需要处理的页面。
+
 Options:
 
 ```
@@ -175,7 +177,7 @@ Options:
 
 ### Prerequisite
 
-首先，不管是模拟器还是真机，都需要开启 ADB。现在的代码只适用于只有一个 ADB 设备的情况，如果有需求，请自行修改 `mobile.py`。
+首先，不管是模拟器还是真机，都需要开启 ADB。现在的代码只适用于只有一个 ADB 设备的情况，如果有需求，请自行修改 `provider/lk_mobile.py`。
 
 TODO:
 
