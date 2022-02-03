@@ -4,8 +4,10 @@
 - [Usage Overview](#usage-overview)
 - [Usage](#usage)
 	- [轻之国度](#轻之国度)
+		- [Options](#options)
 		- [缓存相关](#缓存相关)
 	- [轻之国度 App](#轻之国度-app)
+		- [Options](#options-1)
 		- [Prerequisite](#prerequisite)
 		- [Background](#background)
 		- [界面布局相关参数](#界面布局相关参数)
@@ -13,6 +15,7 @@
 		- [合并模式相关](#合并模式相关)
 		- [缓存相关](#缓存相关-1)
 	- [轻小说文库](#轻小说文库)
+		- [Options](#options-2)
 		- [缓存相关](#缓存相关-2)
 		- [指定卷数](#指定卷数)
 - [Known Issues](#known-issues)
@@ -130,7 +133,7 @@ Options:
 
 ## 轻之国度
 
-Options:
+### Options
 
 ```
   --lk-html-dump PATH             (lightnovel.us) html content dump file path
@@ -150,9 +153,9 @@ Options:
 
 ## 轻之国度 App
 
-由于没有 URL，所以在这种情况下 url 参数应指定为 `lk-mobile`，并打开需要处理的页面。
+### Options
 
-Options:
+由于没有 URL，所以在这种情况下 url 参数应指定为 `lk-mobile`，并打开需要处理的页面。
 
 ```
   --lk-mobile-top-area-height INTEGER
@@ -258,7 +261,7 @@ TODO:
 
 ## 轻小说文库
 
-Options:
+### Options
 
 ```
   --wenku8-volume INTEGER         (wenku8.net) identify the index of the
