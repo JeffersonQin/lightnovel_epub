@@ -71,17 +71,14 @@ def process_series_page(url):
 		echo.pop_subroutine()
 
 
-def obtain_article_content(url):
+def obtain_article_content(content):
 	'''
-	download web content
-	:param url: url to download
+	obtain article content
 	'''
 	echo.push_subroutine(sys._getframe().f_code.co_name)
-
-	res = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS)
 	# parse
 	try:
-		soup = BeautifulSoup(res, 'lxml')
+		soup = BeautifulSoup(content, 'lxml')
 		article = soup.find('article', id='article-main-contents')
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
@@ -156,7 +153,11 @@ def process_article_page(url, dump_path):
 					content = f.read()
 				flag = False
 		if flag:
-			content = obtain_article_content(url)
+			content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS)
+
+		content = obtain_article_content(content)
+
+		if flag:
 			if dump_path is None:
 				dump_path = os.path.join(DUMP_PATH, f'./{time.time_ns()}.html')
 			with open(dump_path, 'w', encoding='utf-8') as f:
