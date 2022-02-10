@@ -500,6 +500,8 @@ def get_contents(
 								else:
 									echo.cerr('Invalid input, please try again')
 						else:
+							echo.cerr('vert content:', vert_str)
+							echo.cerr('horz content:', horz_str)
 							raise Exception('Unexpected content')
 					# string cleaned up
 					if not (horz_str == '' and vert_str == ''):
