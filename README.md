@@ -139,6 +139,10 @@ Options:
   --lk-html-dump PATH             (lightnovel.us) html content dump file path
 ```
 
+### 高权限文章
+
+有部分文章会 **先显示无权限观看，后可以观看 先显示无权限观看，后可以观看**。这种情况下，浏览器保存 `HTML`，然后启用 `--lk-html-dump` 选项即可。
+
 ### 缓存相关
 
 * 单页面
@@ -198,7 +202,7 @@ TODO:
 
 * `--lk-mobile-top-area-height`: 设备最顶端到导航栏的高度
 * `--lk-mobile-bottom-area-height`: 设备下方评论栏的高度
-* 上面两个参数默认值为分辨率是 **3840 * 2160** 的情况
+* 上面两个参数默认值为分辨率是 Nox 模拟器 **3840 * 2160** 的情况
 * 其余的可以保持默认，有兴趣可以研究
 
 <div align="center">
@@ -249,6 +253,16 @@ TODO:
 1. `--lk-mobile-ignore-newline`: 将文中所有出现的 `\n` 全部忽略，效果很好。但是同时，我们也丧失了知道哪里有排版的机会。
 2. `--lk-mobile-conflict-mode`: 程序最初的版本如果遇到图片但是文字还没有合并，会直接报错。如果加上了 `--lk-mobile-conflict-mode True` 就会在这个情况下让用户选择选择 Landscape 还是 Portrait 的版本。以后可能还会加上让用户手动输入的选项。
 
+### Mumu 模拟器点击位置不正确解决方案
+
+Mumu 模拟器点击可能错位，如下图所示：
+
+<div align="center">
+	<img src="./assets/mumu-error.png" width=300>
+</div>
+
+这种情况下只需在设置中交换长、宽数值即可，让宽大于长。
+
 ### 缓存相关
 
 上面已经提到，由于整过过程耗时很长，所以在获取完 Landscape 和 Portrait 数据后会分别写入到文件，两组数据合并完成后也会写入到 Html。
@@ -283,7 +297,7 @@ TODO:
 # Known Issues
 
 * 轻之国度
-  * 对于部分 **先显示无权限观看**，**后可以观看** 的文章无效，以后可能会写浏览器模式
+  * 【已解决，见上】~~对于部分 **先显示无权限观看**，**后可以观看** 的文章无效，以后可能会写浏览器模式~~
 * 轻之国度 App
   * HTML 排版无法获取
   * 【已解决】 ~~排版问题可能导致 Lanscape / Portrait 信息无法 Merge，如果遇到这种情况，找到任意一个 Case 的 `dump` 文件 (这里记作 `dump-file`)，并加上命令行参数：`--vert-dump <dump-file> --horz-dump <dump-file>`~~
