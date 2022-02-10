@@ -9,6 +9,7 @@ import os
 import traceback
 import dominate
 from utils import echo
+from utils import downloader
 
 # define constants
 TOP_AREA_HEIGHT = 325
