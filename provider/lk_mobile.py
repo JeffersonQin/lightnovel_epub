@@ -7,10 +7,9 @@ import sys
 import pickle
 import os
 import traceback
-import click
 import dominate
 from utils import echo
-from lightnovel import LightNovel
+from utils import downloader
 
 # define constants
 TOP_AREA_HEIGHT = 325
@@ -19,13 +18,7 @@ IMAGE_EQUAL_THRESHOLD = 1
 SAFE_AREA_PADDING = 20
 DUMP_PATH = './dump'
 
-
-echo.init_subroutine()
-echo.push_subroutine('Global')
-# connect to device
-d = u2.connect()
-# print device info
-echo.clog('Device Info:', d.info)
+d = None
 
 
 class Image:
@@ -311,6 +304,7 @@ def get_content():
 
 			if contents == []:
 				contents = visible_contents
+				echo.clog("New contents:", contents)
 			else:
 				check_count = min(len(contents), len(visible_contents))
 				# iterate from check_count to zero
@@ -385,46 +379,19 @@ def load_contents(file_path):
 		echo.pop_subroutine()
 
 
-@click.group()
-def cli():
-	pass
-
-
-@cli.command()
-@click.option('--top-area-height', default=325, help='the height of the top area')
-@click.option('--bottom-area-height', default=200, help='the height of the bottom area')
-@click.option('--image-equal-threshold', default=1, help='the threshold of judging whether two images are equal')
-@click.option('--safe-area-padding', default=20, help='the padding of the safe area')
-@click.option('--dump-path', type=click.Path(exists=True), default='./dump', help='directory for dumping')
-@click.option('--vert-dump', type=click.Path(exists=True), default=None, help='vertical content dump file path')
-@click.option('--horz-dump', type=click.Path(exists=True), default=None, help='horizontal content dump file path')
-@click.option('--html-dump', type=click.Path(exists=True), default=None, help='html content dump file path')
-@click.option('--conflict-mode', type=bool, default=False, help='whether to resolve conflict manually')
-@click.option('--ignore-newline', type=bool, default=True, help='whether to ignore newline')
-@click.option('--title', default=None, help='title of light novel')
-@click.option('--authors', default=None, help='authors\' names, separated by comma (,)')
-@click.option('--identifier', default=None, help='identifier of light novel')
-@click.option('--cover-link', default=None, help='cover_link of light novel. cover_link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.')
-@click.option('--cvt', default=None, help='OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC')
-@click.option('--path', type=click.Path(exists=True), default='./', help='directory for saving the light novel')
-def dump(top_area_height, 
-		bottom_area_height, 
-		image_equal_threshold, 
-		safe_area_padding, 
-		dump_path, 
-		vert_dump, 
-		horz_dump,
-		html_dump,
-		conflict_mode: bool,
-		ignore_newline: bool, 
-		title: str, 
-		authors: str, 
-		identifier: str, 
-		cover_link: str, 
-		cvt: str, 
-		path: str):
+def get_contents(
+	top_area_height, 
+	bottom_area_height, 
+	image_equal_threshold, 
+	safe_area_padding, 
+	dump_path, 
+	vert_dump, 
+	horz_dump,
+	html_dump,
+	conflict_mode: bool,
+	ignore_newline: bool):
 	"""
-	dump the contents to a file
+	get contents
 	:param top_area_height: the height of the top area
 	:param bottom_area_height: the height of the bottom area
 	:param image_equal_threshold: the threshold of judging whether two images are equal
@@ -435,25 +402,26 @@ def dump(top_area_height,
 	:param html_dump: html content dump file path
 	:param conflict_mode: whether to resolve conflict manually
 	:param ignore_newline: whether to ignore newline
-	:param title: title of light novel
-	:param authors: authors' names, separated by comma (,)
-	:param identifier: identifier of light novel
-	:param cover_link: cover_link of light novel. cover_link can either be web link or file path. if it is not beginned with "http", it would be recognized as file path. if nothing was given, then it will use the first picture of webpage.
-	:param cvt: OpenCC conversion configuration, used to convert between different Chinese characters. you can choose the value from "s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t". if nothing is provided, no conversion would be performed. for more information, please visit: https://github.com/BYVoid/OpenCC
-	:param path: directory for saving the light novel
-	:return: None
 	"""
 	echo.push_subroutine(sys._getframe().f_code.co_name)
+	
 	global TOP_AREA_HEIGHT
 	global BOTTOM_AREA_HEIGHT
 	global IMAGE_EQUAL_THRESHOLD
 	global SAFE_AREA_PADDING
 	global DUMP_PATH
+	global d
 	TOP_AREA_HEIGHT = top_area_height
 	BOTTOM_AREA_HEIGHT = bottom_area_height
 	IMAGE_EQUAL_THRESHOLD = image_equal_threshold
 	SAFE_AREA_PADDING = safe_area_padding
 	DUMP_PATH = dump_path
+
+	try:
+		d = u2.connect()
+		echo.clog('Device Info:', d.info)
+	except Exception as e:
+		echo.cexit("CONNECT TO DEVICE FAILED, PLEASE ENSURE DEVICE IS CONNECTED TO ADB, AND THERE IS ONLY ONE DEVICE")
 
 	try:
 		# init directory
@@ -532,6 +500,8 @@ def dump(top_area_height,
 								else:
 									echo.cerr('Invalid input, please try again')
 						else:
+							echo.cerr('vert content:', vert_str)
+							echo.cerr('horz content:', horz_str)
 							raise Exception('Unexpected content')
 					# string cleaned up
 					if not (horz_str == '' and vert_str == ''):
@@ -595,7 +565,7 @@ def dump(top_area_height,
 				else:
 					raise Exception('Unknown type:', type(this_horz))
 
-			dump_contents(new_contents)
+			# dump_contents(new_contents)
 
 			doc = dominate.document(title='HTML of LK generated by JeffersonQin/lightnovel_epub')
 
@@ -615,24 +585,7 @@ def dump(top_area_height,
 				f.write(html_content)
 			echo.clog('Dumped HTML to', html_path)
 		
-		# generate epub
-		if title is None:
-			title = input('Input title of light novel: ')
-		if authors is None:
-			authors = input('(optional) Input authors\' names, separated by comma (,): ')
-		if identifier is None:
-			identifier = input('(optional) Input identifier of light novel: ')
-		if cover_link is None:
-			cover_link = input('(optional) Input cover_link of light novel (see --help for further explanation): ')
-		novel = LightNovel(source='LK 客户端', authors=authors.split(','), identifier=identifier, title=title, cover_link=cover_link)
-		novel.contents = html_content
-
-		if cvt in ["s2t", "t2s", "s2tw", "tw2s", "s2hk", "hk2s", "s2twp", "tw2sp", "t2tw", "hk2t", "t2hk", "t2jp", "jp2t", "tw2t"]:
-			converter = opencc.OpenCC(f'{cvt}.json')
-			novel.contents = converter.convert(novel.contents)
-
-		novel.write_epub(path)
-
+		return html_content
 	except Exception as e:
 		echo.cerr(f'Error: {repr(e)}')
 		traceback.print_exc()
@@ -641,5 +594,21 @@ def dump(top_area_height,
 		echo.pop_subroutine()
 
 
-if __name__ == '__main__':
-	cli()
+def get_cover(cover_link, dump_path):
+	'''
+	Get cover from link.
+	:param cover_link: link to cover
+	:param dump_path: path to dump cover
+	'''
+	echo.push_subroutine(sys._getframe().f_code.co_name)
+	try:
+		cover_name = cover_link.split('?')[0].split('/')[-1]
+		cover_dir = os.path.join(dump_path, cover_name)
+		downloader.download_file(cover_link, cover_dir, {})
+		return cover_dir
+	except Exception as e:
+		echo.cerr(f'error: {repr(e)}')
+		traceback.print_exc()
+		echo.cexit('GET COVER FAILED')
+	finally:
+		echo.pop_subroutine()
