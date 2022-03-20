@@ -1,4 +1,3 @@
-from operator import truediv
 import click
 import sys
 import traceback
@@ -6,7 +5,6 @@ import os
 import opencc
 
 from lightnovel import LightNovel
-from utils import downloader
 from utils import echo
 from provider import lk_new
 from provider import wenku8

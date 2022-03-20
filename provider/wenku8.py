@@ -1,12 +1,10 @@
 from __future__ import annotations
-import struct
 import time
 import sys
 import traceback
 import os
 import re
 from bs4 import BeautifulSoup
-from soupsieve import select
 from lightnovel import LightNovel
 
 from utils import downloader
@@ -171,19 +169,6 @@ def process_article_page(url, dump_path, cvt=None):
     finally:
         echo.pop_subroutine()
 
-class BookStructure:
-	def __init__(self, title: str = None, author: str = None, id: str = None) -> None:
-		self.title: str = title
-		self.author: str = author
-		self.id: str = id
-		self.books: dict[str, list[BookInfo]] = {}
-		self.contents = {}
-
-	def addChapter(self, book: str, chapter: BookInfo):
-		if not book in self.books:
-			self.books[book] = []
-		self.books[book].append(chapter)
-
 def getBookStructure(source: str, content: str) -> LightNovel:
 	soup = BeautifulSoup(content, 'lxml')
 	title = soup.find(id='title').text
@@ -258,7 +243,7 @@ def get_contents(url, dump_path, volume_index) -> LightNovel:
 
 			if volume_index != -1 and volume_index != cur_volume_index: continue
 
-			ch_index = 1
+			ch_index = 0
 			for chapter in structure.books[book_title]:
 				addr = relative + '/' + chapter.href
 				chWeb = downloader.download_webpage(addr, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
