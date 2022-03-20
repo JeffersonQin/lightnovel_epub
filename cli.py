@@ -111,8 +111,7 @@ def download(
 			contents = lk_new.get_contents(url, dump_path, lk_html_dump)
 			cover_link = lk_new.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		elif url.startswith('https://www.wenku8.net/'):
-			lightNovel = wenku8.get_contents(url, dump_path, wenku8_volume)
-			contents, title, authors, identifier = lightNovel.contents, lightNovel.title, lightNovel.authors, lightNovel.identifier
+			(source, authors, identifier, title, books, contents) = wenku8.get_contents(url, dump_path, wenku8_volume)
 			cover_link = wenku8.get_cover(cover_link, dump_path) if cover_link.startswith('http') else cover_link
 		elif url == 'lk-mobile':
 			contents = lk_mobile.get_contents(lk_mobile_top_area_height, lk_mobile_bottom_area_height, lk_mobile_image_equal_threshold, lk_mobile_safe_area_padding, dump_path, lk_mobile_vert_dump, lk_mobile_horz_dump, lk_mobile_html_dump, lk_mobile_conflict_mode, lk_mobile_ignore_newline)

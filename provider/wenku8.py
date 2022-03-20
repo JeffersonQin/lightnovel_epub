@@ -5,7 +5,6 @@ import traceback
 import os
 import re
 from bs4 import BeautifulSoup
-from lightnovel import LightNovel
 
 from utils import downloader
 from utils import echo
@@ -169,15 +168,13 @@ def process_article_page(url, dump_path, cvt=None):
     finally:
         echo.pop_subroutine()
 
-def getBookStructure(source: str, content: str) -> LightNovel:
+def getBookStructure(source: str, content: str):
 	soup = BeautifulSoup(content, 'lxml')
 	title = soup.find(id='title').text
 	author = soup.find(id='info').text.replace('作者：', '')
 	table = soup.find('table')
 	units = table.find_all('td')
 	bookId = re.search(r'var article_id = "(\S+)"', content)[1]
-	lightNovel = LightNovel(source, author, bookId, title)
-	lightNovel.contents = []
 	books = {}
 	curBook = None
 	for unit in units:
@@ -199,8 +196,7 @@ def getBookStructure(source: str, content: str) -> LightNovel:
 			if curBook not in books:
 				echo.cexit(f'No current book specified: {curChapter}')
 			books[curBook].append(curChapter)
-	lightNovel.books = books
-	return lightNovel
+	return (source, author, bookId, title, books)
 
 
 def getContent(content: str) -> BookInfo:
@@ -211,7 +207,7 @@ def getContent(content: str) -> BookInfo:
 	content = soup.find('div', id='contentmain').prettify()
 	return BookInfo(aid, cid, title, content)
 
-def get_contents(url, dump_path, volume_index) -> LightNovel:
+def get_contents(url, dump_path, volume_index):
 	'''
 	Get contents from url.
 	:param url: url to process
@@ -228,8 +224,9 @@ def get_contents(url, dump_path, volume_index) -> LightNovel:
 		assert ('novel' in url) and ('index.htm' in url), 'not wenku8 novel toc page'
 		relative = url.replace('index.htm', '')
 		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
-		structure = getBookStructure(url, content)
-		book_titles = structure.books.keys()
+		(source, author, bookId, title, books) = getBookStructure(url, content)
+		contents = []
+		book_titles = books.keys()
 		volume_count = len(book_titles)
 
 		if volume_index > volume_count:
@@ -244,7 +241,7 @@ def get_contents(url, dump_path, volume_index) -> LightNovel:
 			if volume_index != -1 and volume_index != cur_volume_index: continue
 
 			ch_index = 0
-			for chapter in structure.books[book_title]:
+			for chapter in books[book_title]:
 				addr = relative + '/' + chapter.href
 				chWeb = downloader.download_webpage(addr, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 				chContent = getContent(chWeb)
@@ -252,7 +249,7 @@ def get_contents(url, dump_path, volume_index) -> LightNovel:
 				aid = chContent.cid
 
 				ch_index += 1
-				echo.clog(f'Processing chapter {ch_index} / {len(structure.books[book_title])}')
+				echo.clog(f'Processing chapter {ch_index} / {len(books[book_title])}')
 				echo.clog(f'Title: {a_title}')
 				echo.clog(f'Article ID: {aid}')
 
@@ -262,9 +259,9 @@ def get_contents(url, dump_path, volume_index) -> LightNovel:
 					f.write(chContent.content)
 				# to call download images
 				img_content = process_article_page(None, a_dump_path)
-				structure.contents.append({'title': a_title, 'content': img_content})
+				contents.append({'title': a_title, 'content': img_content})
 
-		return structure
+		return (source, author, bookId, title, books, contents)
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
 		traceback.print_exc()
