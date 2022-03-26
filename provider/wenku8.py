@@ -190,9 +190,9 @@ def getBookStructure(source: str, content: str):
 			aid = re.search(r'var article_id = "(\S+)"', content)[1]
 			cid = re.search(r'var chapter_id = "(\S+)"', content)[1]
 			curChapter = BookInfo(aid,
-                         cid,
-                         href=atag.attrs['href'],
-                         title=atag.text)
+						cid,
+						href=atag.attrs['href'],
+						title=atag.text)
 			if curBook not in books:
 				echo.cexit(f'No current book specified: {curChapter}')
 			books[curBook].append(curChapter)
@@ -261,7 +261,7 @@ def get_contents(url, dump_path, volume_index):
 				img_content = process_article_page(None, a_dump_path)
 				contents.append({'title': a_title, 'content': img_content})
 
-		return (source, author, bookId, title, books, contents)
+		return source, author, bookId, title, books, contents
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
 		traceback.print_exc()
