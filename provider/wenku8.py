@@ -168,10 +168,13 @@ def process_article_page(url, dump_path, cvt=None):
     finally:
         echo.pop_subroutine()
 
-def getBookStructure(content: str) -> dict[str, list[BookInfo]]:
+def getBookStructure(source: str, content: str):
 	soup = BeautifulSoup(content, 'lxml')
+	title = soup.find(id='title').text
+	author = soup.find(id='info').text.replace('作者：', '')
 	table = soup.find('table')
 	units = table.find_all('td')
+	bookId = re.search(r'var article_id = "(\S+)"', content)[1]
 	books = {}
 	curBook = None
 	for unit in units:
@@ -187,13 +190,13 @@ def getBookStructure(content: str) -> dict[str, list[BookInfo]]:
 			aid = re.search(r'var article_id = "(\S+)"', content)[1]
 			cid = re.search(r'var chapter_id = "(\S+)"', content)[1]
 			curChapter = BookInfo(aid,
-                         cid,
-                         href=atag.attrs['href'],
-                         title=atag.text)
+						cid,
+						href=atag.attrs['href'],
+						title=atag.text)
 			if curBook not in books:
 				echo.cexit(f'No current book specified: {curChapter}')
 			books[curBook].append(curChapter)
-	return books
+	return (source, author, bookId, title, books)
 
 
 def getContent(content: str) -> BookInfo:
@@ -204,13 +207,13 @@ def getContent(content: str) -> BookInfo:
 	content = soup.find('div', id='contentmain').prettify()
 	return BookInfo(aid, cid, title, content)
 
-
 def get_contents(url, dump_path, volume_index):
 	'''
 	Get contents from url.
 	:param url: url to process
 	:param dump_path: path to dump things
 	:param volume_index: index of volume to generate
+	:returns: LightNovel class
 	'''
 	global DUMP_PATH
 	DUMP_PATH = dump_path
@@ -221,31 +224,35 @@ def get_contents(url, dump_path, volume_index):
 		assert ('novel' in url) and ('index.htm' in url), 'not wenku8 novel toc page'
 		relative = url.replace('index.htm', '')
 		content = downloader.download_webpage(url, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
-		structure = getBookStructure(content)
+		(source, author, bookId, title, books) = getBookStructure(url, content)
+		contents = []
+		book_titles = books.keys()
+		volume_count = len(book_titles)
 
-		if volume_index > len(structure.keys()):
-			echo.cexit("ERROR: VOLUME INDEX OUT OF RANGE, TOTAL VOLUME:", len(structure.keys()))
+		if volume_index > volume_count:
+			echo.cexit("ERROR: VOLUME INDEX OUT OF RANGE, TOTAL VOLUME:", volume_count)
 
 		# series
-		contents = []
-		book_index = 0
-		for book in structure.keys():
-			book_index += 1
-			echo.clog(f'Processing book {book} {book_index} / {len(structure.keys())}')
+		cur_volume_index = 0
+		for book_title in book_titles:
+			cur_volume_index += 1
+			echo.clog(f'Processing volume {book_title} {cur_volume_index} / {volume_count}')
 
-			if volume_index != -1 and volume_index != book_index: continue
+			if volume_index != -1 and volume_index != cur_volume_index: continue
 
 			ch_index = 0
-			for chapter in structure[book]:
+			for chapter in books[book_title]:
 				addr = relative + '/' + chapter.href
 				chWeb = downloader.download_webpage(addr, DOCUMENT_DOWNLOAD_HEADERS, DECODE)
 				chContent = getContent(chWeb)
-				ch_index += 1
-				echo.clog(f'Processing chapter {ch_index} / {len(structure[book])}')
 				a_title = chContent.title
 				aid = chContent.cid
+
+				ch_index += 1
+				echo.clog(f'Processing chapter {ch_index} / {len(books[book_title])}')
 				echo.clog(f'Title: {a_title}')
 				echo.clog(f'Article ID: {aid}')
+
 				a_dump_path = os.path.join(dump_path, f'{aid}.html')
 				with open(a_dump_path, 'w', encoding=ENCODE) as f:
 					echo.clog(f'Save content to {a_dump_path}')
@@ -254,7 +261,7 @@ def get_contents(url, dump_path, volume_index):
 				img_content = process_article_page(None, a_dump_path)
 				contents.append({'title': a_title, 'content': img_content})
 
-		return contents
+		return source, author, bookId, title, books, contents
 	except Exception as e:
 		echo.cerr(f'error: {repr(e)}')
 		traceback.print_exc()
