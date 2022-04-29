@@ -14,8 +14,6 @@ DOCUMENT_DOWNLOAD_HEADERS = {
     'accept':
     'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     'Content-Type': 'text/html; charset=unicode',
-    'accept-encoding':
-    'gzip, deflate, br',
     'accept-language':
     'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
     'cache-control':
@@ -43,8 +41,6 @@ DOCUMENT_DOWNLOAD_HEADERS = {
 IMAGE_DOWNLOAD_HEADERS = {
     'Accept':
     'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-    'Accept-Encoding':
-    'gzip, deflate',
     'Accept-Language':
     'zh-CN,zh;q=0.9,en;q=0.8',
     'Host':
